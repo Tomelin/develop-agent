@@ -17,12 +17,14 @@ import (
 	"github.com/develop-agent/backend/api/server"
 	"github.com/develop-agent/backend/config"
 	"github.com/develop-agent/backend/internal/domain/agent"
+	"github.com/develop-agent/backend/internal/domain/project"
 	"github.com/develop-agent/backend/internal/domain/user"
 	"github.com/develop-agent/backend/internal/infra/cache/redis"
 	"github.com/develop-agent/backend/internal/infra/database/mongodb"
 	"github.com/develop-agent/backend/internal/infra/messaging/rabbitmq"
 	"github.com/develop-agent/backend/internal/infra/seed"
 	usecaseauth "github.com/develop-agent/backend/internal/usecase/auth"
+	usecaseproject "github.com/develop-agent/backend/internal/usecase/project"
 	pkgauth "github.com/develop-agent/backend/pkg/auth"
 	"github.com/develop-agent/backend/pkg/logger"
 	"github.com/gin-gonic/gin"
@@ -66,6 +68,14 @@ func main() {
 	if err := agentRepo.EnsureIndexes(context.Background()); err != nil {
 		logger.Global().Fatal("Failed to ensure Agent Mongo indexes", zap.Error(err))
 	}
+	projectRepo := mongodb.NewProjectRepository(mongoClient, cfg.Mongo.DBName)
+	if err := projectRepo.EnsureIndexes(context.Background()); err != nil {
+		logger.Global().Fatal("Failed to ensure Project Mongo indexes", zap.Error(err))
+	}
+	taskRepo := mongodb.NewTaskRepository(mongoClient, cfg.Mongo.DBName)
+	if err := taskRepo.EnsureIndexes(context.Background()); err != nil {
+		logger.Global().Fatal("Failed to ensure Task Mongo indexes", zap.Error(err))
+	}
 
 	if err := seed.NewAdminSeeder(userRepo).Run(context.Background(), cfg.Seed.ForceAdminReset); err != nil {
 		logger.Global().Fatal("Failed to seed admin user", zap.Error(err))
@@ -86,9 +96,12 @@ func main() {
 	}
 
 	authService := usecaseauth.NewService(userRepo, tokenManager, pkgauth.NewRedisRefreshStore(redisClient))
+	projectService := usecaseproject.NewService(projectRepo, taskRepo)
 	authHandler := handler.NewAuthHandler(authService)
 	userHandler := handler.NewUserHandler(userRepo)
 	agentHandler := handler.NewAgentHandler(agentRepo)
+	projectHandler := handler.NewProjectHandler(projectRepo, projectService)
+	taskHandler := handler.NewTaskHandler(taskRepo, projectRepo)
 
 	srv := server.New(cfg)
 	v1 := srv.Router().Group("/api/v1")
@@ -100,6 +113,8 @@ func main() {
 		private.Use(middleware.AuthMiddleware(authService))
 		userHandler.Register(private)
 		agentHandler.Register(private)
+		projectHandler.Register(private)
+		taskHandler.Register(private)
 	}
 
 	health.NewHandler(mongoClient, redisClient, rmqClient).Register(srv.Router())
@@ -125,3 +140,5 @@ func main() {
 
 var _ user.Repository = (*mongodb.UserRepository)(nil)
 var _ agent.Repository = (*mongodb.AgentRepository)(nil)
+var _ project.ProjectRepository = (*mongodb.ProjectRepository)(nil)
+var _ project.TaskRepository = (*mongodb.TaskRepository)(nil)
