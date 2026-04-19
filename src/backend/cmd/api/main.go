@@ -16,6 +16,7 @@ import (
 	"github.com/develop-agent/backend/api/middleware"
 	"github.com/develop-agent/backend/api/server"
 	"github.com/develop-agent/backend/config"
+	"github.com/develop-agent/backend/internal/domain/agent"
 	"github.com/develop-agent/backend/internal/domain/user"
 	"github.com/develop-agent/backend/internal/infra/cache/redis"
 	"github.com/develop-agent/backend/internal/infra/database/mongodb"
@@ -61,9 +62,16 @@ func main() {
 	if err := userRepo.EnsureIndexes(context.Background()); err != nil {
 		logger.Global().Fatal("Failed to ensure Mongo indexes", zap.Error(err))
 	}
+	agentRepo := mongodb.NewAgentRepository(mongoClient, cfg.Mongo.DBName)
+	if err := agentRepo.EnsureIndexes(context.Background()); err != nil {
+		logger.Global().Fatal("Failed to ensure Agent Mongo indexes", zap.Error(err))
+	}
 
 	if err := seed.NewAdminSeeder(userRepo).Run(context.Background(), cfg.Seed.ForceAdminReset); err != nil {
 		logger.Global().Fatal("Failed to seed admin user", zap.Error(err))
+	}
+	if err := seed.NewAgentsSeeder(agentRepo).Run(context.Background()); err != nil {
+		logger.Global().Fatal("Failed to seed agents catalog", zap.Error(err))
 	}
 
 	tokenManager, err := pkgauth.NewTokenManager(
@@ -80,6 +88,7 @@ func main() {
 	authService := usecaseauth.NewService(userRepo, tokenManager, pkgauth.NewRedisRefreshStore(redisClient))
 	authHandler := handler.NewAuthHandler(authService)
 	userHandler := handler.NewUserHandler(userRepo)
+	agentHandler := handler.NewAgentHandler(agentRepo)
 
 	srv := server.New(cfg)
 	v1 := srv.Router().Group("/api/v1")
@@ -90,6 +99,7 @@ func main() {
 		private := v1.Group("")
 		private.Use(middleware.AuthMiddleware(authService))
 		userHandler.Register(private)
+		agentHandler.Register(private)
 	}
 
 	health.NewHandler(mongoClient, redisClient, rmqClient).Register(srv.Router())
@@ -114,3 +124,4 @@ func main() {
 }
 
 var _ user.Repository = (*mongodb.UserRepository)(nil)
+var _ agent.Repository = (*mongodb.AgentRepository)(nil)
