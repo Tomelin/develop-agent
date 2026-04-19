@@ -14,6 +14,8 @@ type Config struct {
 	Redis    RedisConfig
 	RabbitMQ RabbitMQConfig
 	LLM      LLMConfig
+	Auth     AuthConfig
+	Seed     SeedConfig
 }
 
 // AppConfig holds application specific configurations.
@@ -25,7 +27,8 @@ type AppConfig struct {
 
 // MongoConfig holds MongoDB configurations.
 type MongoConfig struct {
-	URI string
+	URI    string
+	DBName string `mapstructure:"db_name"`
 }
 
 // RedisConfig holds Redis configurations.
@@ -45,6 +48,18 @@ type LLMConfig struct {
 	APIKey   string
 }
 
+type AuthConfig struct {
+	JWTPrivateKeyB64 string `mapstructure:"jwt_private_key_b64"`
+	JWTIssuer        string `mapstructure:"jwt_issuer"`
+	JWTAudience      string `mapstructure:"jwt_audience"`
+	AccessTTLMinutes int    `mapstructure:"access_ttl_minutes"`
+	RefreshTTLDays   int    `mapstructure:"refresh_ttl_days"`
+}
+
+type SeedConfig struct {
+	ForceAdminReset bool `mapstructure:"force_admin_reset"`
+}
+
 // Load loads the configuration from a file and environment variables.
 func Load(path string) (*Config, error) {
 	viper.SetConfigFile(path)
@@ -60,9 +75,15 @@ func Load(path string) (*Config, error) {
 	viper.SetDefault("app.port", "8080")
 	viper.SetDefault("app.debug", false)
 	viper.SetDefault("mongo.uri", "mongodb://admin:password@localhost:27017")
+	viper.SetDefault("mongo.db_name", "develop_agent")
 	viper.SetDefault("redis.addr", "localhost:6379")
 	viper.SetDefault("redis.password", "")
 	viper.SetDefault("rabbitmq.url", "amqp://guest:guest@localhost:5672/")
+	viper.SetDefault("auth.jwt_issuer", "develop-agent")
+	viper.SetDefault("auth.jwt_audience", "develop-agent-users")
+	viper.SetDefault("auth.access_ttl_minutes", 15)
+	viper.SetDefault("auth.refresh_ttl_days", 7)
+	viper.SetDefault("seed.force_admin_reset", false)
 
 	// Attempt to read the config file
 	if err := viper.ReadInConfig(); err != nil {
@@ -92,11 +113,17 @@ func validate(cfg *Config) error {
 	if cfg.Mongo.URI == "" {
 		return fmt.Errorf("missing critical configuration: mongo.uri")
 	}
+	if cfg.Mongo.DBName == "" {
+		return fmt.Errorf("missing critical configuration: mongo.db_name")
+	}
 	if cfg.Redis.Addr == "" {
 		return fmt.Errorf("missing critical configuration: redis.addr")
 	}
 	if cfg.RabbitMQ.URL == "" {
 		return fmt.Errorf("missing critical configuration: rabbitmq.url")
+	}
+	if cfg.Auth.JWTPrivateKeyB64 == "" {
+		return fmt.Errorf("missing critical configuration: auth.jwt_private_key_b64")
 	}
 	return nil
 }
