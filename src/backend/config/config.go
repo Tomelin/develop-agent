@@ -14,6 +14,7 @@ type Config struct {
 	Redis    RedisConfig
 	RabbitMQ RabbitMQConfig
 	LLM      LLMConfig
+	Agent    AgentConfig
 	Auth     AuthConfig
 	Seed     SeedConfig
 }
@@ -48,6 +49,11 @@ type LLMConfig struct {
 	APIKey   string
 }
 
+type AgentConfig struct {
+	ChannelBufferSize   int `mapstructure:"channel_buffer_size"`
+	ChannelDrainTimeout int `mapstructure:"channel_drain_timeout"`
+}
+
 type AuthConfig struct {
 	JWTPrivateKeyB64 string `mapstructure:"jwt_private_key_b64"`
 	JWTIssuer        string `mapstructure:"jwt_issuer"`
@@ -79,6 +85,8 @@ func Load(path string) (*Config, error) {
 	viper.SetDefault("redis.addr", "localhost:6379")
 	viper.SetDefault("redis.password", "")
 	viper.SetDefault("rabbitmq.url", "amqp://guest:guest@localhost:5672/")
+	viper.SetDefault("agent.channel_buffer_size", 10)
+	viper.SetDefault("agent.channel_drain_timeout", 30)
 	viper.SetDefault("auth.jwt_issuer", "develop-agent")
 	viper.SetDefault("auth.jwt_audience", "develop-agent-users")
 	viper.SetDefault("auth.access_ttl_minutes", 15)
