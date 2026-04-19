@@ -58,6 +58,22 @@ Ao final desta fase, a plataforma deverá ter:
 - **Billing por Execução:** Cada chamada de LLM registrada com tokens e custo
 - **Retry Inteligente:** Falhas transitórias tratadas sem intervenção manual
 
+### Contrato de Comunicação entre Grupos de Agentes (Obrigatório)
+
+Para esta phase, fica **explicitamente definido** que a comunicação entre grupos de agentes (Produtor, Revisor, Refinador e orquestrador) acontece **somente via channels**.
+
+- O payload deve usar o envelope `AgentMessage` em JSON padronizado.
+- Comunicação direta (acesso de memória/chamada direta entre agentes) é proibida.
+- O tamanho padrão do buffer do channel é **10**.
+- Esse valor é **configurável** via configuração da aplicação (`agent.channel_buffer_size`), sem alterar o contrato de comunicação.
+
+Exemplo de configuração:
+
+```yaml
+agent:
+  channel_buffer_size: 10 # default global; pode ser alterado por configuração
+```
+
 ---
 
 ## Modo de Execução
