@@ -17,6 +17,7 @@ import (
 	"github.com/develop-agent/backend/api/server"
 	"github.com/develop-agent/backend/config"
 	"github.com/develop-agent/backend/internal/domain/agent"
+	"github.com/develop-agent/backend/internal/domain/interview"
 	"github.com/develop-agent/backend/internal/domain/project"
 	"github.com/develop-agent/backend/internal/domain/prompt"
 	"github.com/develop-agent/backend/internal/domain/user"
@@ -25,8 +26,10 @@ import (
 	"github.com/develop-agent/backend/internal/infra/messaging/rabbitmq"
 	"github.com/develop-agent/backend/internal/infra/seed"
 	usecaseauth "github.com/develop-agent/backend/internal/usecase/auth"
+	usecaseinterview "github.com/develop-agent/backend/internal/usecase/interview"
 	usecaseproject "github.com/develop-agent/backend/internal/usecase/project"
 	usecaseprompt "github.com/develop-agent/backend/internal/usecase/prompt"
+	"github.com/develop-agent/backend/pkg/agentsdk/mock"
 	pkgauth "github.com/develop-agent/backend/pkg/auth"
 	"github.com/develop-agent/backend/pkg/logger"
 	"github.com/gin-gonic/gin"
@@ -82,6 +85,10 @@ func main() {
 	if err := promptRepo.EnsureIndexes(context.Background()); err != nil {
 		logger.Global().Fatal("Failed to ensure Prompt Mongo indexes", zap.Error(err))
 	}
+	interviewRepo := mongodb.NewInterviewRepository(mongoClient, cfg.Mongo.DBName)
+	if err := interviewRepo.EnsureIndexes(context.Background()); err != nil {
+		logger.Global().Fatal("Failed to ensure Interview Mongo indexes", zap.Error(err))
+	}
 
 	if err := seed.NewAdminSeeder(userRepo).Run(context.Background(), cfg.Seed.ForceAdminReset); err != nil {
 		logger.Global().Fatal("Failed to seed admin user", zap.Error(err))
@@ -109,6 +116,8 @@ func main() {
 	projectHandler := handler.NewProjectHandler(projectRepo, projectService)
 	taskHandler := handler.NewTaskHandler(taskRepo, projectRepo)
 	promptHandler := handler.NewPromptHandler(promptRepo, usecaseprompt.NewService(promptRepo))
+	interviewService := usecaseinterview.NewService(interviewRepo, projectRepo, mock.New(), nil)
+	interviewHandler := handler.NewInterviewHandler(interviewService)
 
 	srv := server.New(cfg)
 	v1 := srv.Router().Group("/api/v1")
@@ -123,6 +132,7 @@ func main() {
 		projectHandler.Register(private)
 		taskHandler.Register(private)
 		promptHandler.Register(private)
+		interviewHandler.Register(private)
 	}
 
 	health.NewHandler(mongoClient, redisClient, rmqClient).Register(srv.Router())
@@ -151,3 +161,4 @@ var _ agent.Repository = (*mongodb.AgentRepository)(nil)
 var _ project.ProjectRepository = (*mongodb.ProjectRepository)(nil)
 var _ project.TaskRepository = (*mongodb.TaskRepository)(nil)
 var _ prompt.UserPromptRepository = (*mongodb.UserPromptRepository)(nil)
+var _ interview.Repository = (*mongodb.InterviewRepository)(nil)
