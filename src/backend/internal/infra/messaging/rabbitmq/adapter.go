@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sync"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -13,6 +14,7 @@ type Adapter struct {
 	Connection *amqp.Connection
 	Channel    *amqp.Channel
 	url        string
+	mu         sync.RWMutex
 }
 
 // NewAdapter creates a new RabbitMQ adapter and handles connection.
@@ -36,15 +38,19 @@ func (a *Adapter) connect() error {
 
 	ch, err := conn.Channel()
 	if err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return err
 	}
 
+	// Setup topology in the new connection/channel first.
+	a.mu.Lock()
 	a.Connection = conn
 	a.Channel = ch
+	a.mu.Unlock()
 
-	// Setup topology
 	if err := a.setupTopology(); err != nil {
+		_ = ch.Close()
+		_ = conn.Close()
 		return err
 	}
 
@@ -52,8 +58,16 @@ func (a *Adapter) connect() error {
 }
 
 func (a *Adapter) setupTopology() error {
+	a.mu.RLock()
+	ch := a.Channel
+	a.mu.RUnlock()
+
+	if ch == nil {
+		return fmt.Errorf("rabbitmq channel is not initialized")
+	}
+
 	// Setup main exchange
-	err := a.Channel.ExchangeDeclare(
+	err := ch.ExchangeDeclare(
 		"agency.events", // name
 		"topic",         // type
 		true,            // durable
@@ -67,7 +81,7 @@ func (a *Adapter) setupTopology() error {
 	}
 
 	// Setup dead letter exchange and queue
-	err = a.Channel.ExchangeDeclare(
+	err = ch.ExchangeDeclare(
 		"agency.events.dlx",
 		"topic",
 		true,
@@ -80,7 +94,7 @@ func (a *Adapter) setupTopology() error {
 		return err
 	}
 
-	_, err = a.Channel.QueueDeclare(
+	_, err = ch.QueueDeclare(
 		"dlq",
 		true,
 		false,
@@ -92,7 +106,7 @@ func (a *Adapter) setupTopology() error {
 		return err
 	}
 
-	err = a.Channel.QueueBind(
+	err = ch.QueueBind(
 		"dlq",
 		"#",
 		"agency.events.dlx",
@@ -103,16 +117,14 @@ func (a *Adapter) setupTopology() error {
 		return err
 	}
 
-	// Here you would also create the phase.1 ... phase.9 queues and bind them.
 	for i := 1; i <= 9; i++ {
 		queueName := fmt.Sprintf("phase.%d", i)
 		args := amqp.Table{
 			"x-dead-letter-exchange":    "agency.events.dlx",
 			"x-dead-letter-routing-key": queueName,
-			// Simplified DLQ logic here, real life would need x-delivery-limit setup using Quorum queues or similar
 		}
 
-		_, err = a.Channel.QueueDeclare(
+		_, err = ch.QueueDeclare(
 			queueName,
 			true,
 			false,
@@ -124,9 +136,9 @@ func (a *Adapter) setupTopology() error {
 			return err
 		}
 
-		if bindErr := a.Channel.QueueBind(
+		if bindErr := ch.QueueBind(
 			queueName,
-			fmt.Sprintf("phase.%d.*", i), // routing key e.g. phase.1.started
+			fmt.Sprintf("phase.%d.*", i),
 			"agency.events",
 			false,
 			nil,
@@ -139,8 +151,20 @@ func (a *Adapter) setupTopology() error {
 }
 
 func (a *Adapter) handleReconnect() {
+	backoff := 1 * time.Second
+	maxBackoff := 30 * time.Second
+
 	for {
-		reason, ok := <-a.Connection.NotifyClose(make(chan *amqp.Error))
+		a.mu.RLock()
+		conn := a.Connection
+		a.mu.RUnlock()
+
+		if conn == nil {
+			time.Sleep(backoff)
+			continue
+		}
+
+		reason, ok := <-conn.NotifyClose(make(chan *amqp.Error))
 		if !ok {
 			// Connection closed gracefully
 			return
@@ -148,10 +172,17 @@ func (a *Adapter) handleReconnect() {
 		log.Printf("RabbitMQ connection closed: %v. Reconnecting...", reason)
 
 		for {
-			time.Sleep(5 * time.Second) // Basic exponential backoff could be implemented here
+			time.Sleep(backoff)
 			if err := a.connect(); err == nil {
 				log.Println("RabbitMQ reconnected successfully")
+				backoff = 1 * time.Second
 				break
+			}
+			if backoff < maxBackoff {
+				backoff *= 2
+				if backoff > maxBackoff {
+					backoff = maxBackoff
+				}
 			}
 		}
 	}
@@ -159,8 +190,11 @@ func (a *Adapter) handleReconnect() {
 
 // Close disconnects gracefully.
 func (a *Adapter) Close() error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
 	if a.Channel != nil {
-		a.Channel.Close()
+		_ = a.Channel.Close()
 	}
 	if a.Connection != nil {
 		return a.Connection.Close()
@@ -171,6 +205,9 @@ func (a *Adapter) Close() error {
 // Ping checks if the connection is open.
 func (a *Adapter) Ping() (int64, error) {
 	start := time.Now()
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+
 	if a.Connection == nil || a.Connection.IsClosed() {
 		return 0, fmt.Errorf("connection is closed")
 	}
@@ -187,7 +224,14 @@ func NewPublisher(adapter *Adapter) *Publisher {
 }
 
 func (p *Publisher) Publish(ctx context.Context, routingKey string, body []byte) error {
-	return p.adapter.Channel.PublishWithContext(
+	p.adapter.mu.RLock()
+	ch := p.adapter.Channel
+	p.adapter.mu.RUnlock()
+	if ch == nil {
+		return fmt.Errorf("rabbitmq channel is not initialized")
+	}
+
+	return ch.PublishWithContext(
 		ctx,
 		"agency.events",
 		routingKey,
@@ -211,7 +255,14 @@ func NewConsumer(adapter *Adapter) *Consumer {
 }
 
 func (c *Consumer) Consume(queueName string, handler func(amqp.Delivery)) error {
-	msgs, err := c.adapter.Channel.Consume(
+	c.adapter.mu.RLock()
+	ch := c.adapter.Channel
+	c.adapter.mu.RUnlock()
+	if ch == nil {
+		return fmt.Errorf("rabbitmq channel is not initialized")
+	}
+
+	msgs, err := ch.Consume(
 		queueName,
 		"",    // consumer tag
 		false, // auto-ack disabled (explicit ack needed)

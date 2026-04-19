@@ -59,6 +59,10 @@ func Load(path string) (*Config, error) {
 	viper.SetDefault("app.env", "development")
 	viper.SetDefault("app.port", "8080")
 	viper.SetDefault("app.debug", false)
+	viper.SetDefault("mongo.uri", "mongodb://admin:password@localhost:27017")
+	viper.SetDefault("redis.addr", "localhost:6379")
+	viper.SetDefault("redis.password", "")
+	viper.SetDefault("rabbitmq.url", "amqp://guest:guest@localhost:5672/")
 
 	// Attempt to read the config file
 	if err := viper.ReadInConfig(); err != nil {
@@ -84,6 +88,15 @@ func Load(path string) (*Config, error) {
 func validate(cfg *Config) error {
 	if cfg.App.Port == "" {
 		return fmt.Errorf("missing critical configuration: app.port")
+	}
+	if cfg.Mongo.URI == "" {
+		return fmt.Errorf("missing critical configuration: mongo.uri")
+	}
+	if cfg.Redis.Addr == "" {
+		return fmt.Errorf("missing critical configuration: redis.addr")
+	}
+	if cfg.RabbitMQ.URL == "" {
+		return fmt.Errorf("missing critical configuration: rabbitmq.url")
 	}
 	return nil
 }
