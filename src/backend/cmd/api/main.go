@@ -18,6 +18,7 @@ import (
 	"github.com/develop-agent/backend/config"
 	"github.com/develop-agent/backend/internal/domain/agent"
 	"github.com/develop-agent/backend/internal/domain/project"
+	"github.com/develop-agent/backend/internal/domain/prompt"
 	"github.com/develop-agent/backend/internal/domain/user"
 	"github.com/develop-agent/backend/internal/infra/cache/redis"
 	"github.com/develop-agent/backend/internal/infra/database/mongodb"
@@ -25,6 +26,7 @@ import (
 	"github.com/develop-agent/backend/internal/infra/seed"
 	usecaseauth "github.com/develop-agent/backend/internal/usecase/auth"
 	usecaseproject "github.com/develop-agent/backend/internal/usecase/project"
+	usecaseprompt "github.com/develop-agent/backend/internal/usecase/prompt"
 	pkgauth "github.com/develop-agent/backend/pkg/auth"
 	"github.com/develop-agent/backend/pkg/logger"
 	"github.com/gin-gonic/gin"
@@ -76,6 +78,10 @@ func main() {
 	if err := taskRepo.EnsureIndexes(context.Background()); err != nil {
 		logger.Global().Fatal("Failed to ensure Task Mongo indexes", zap.Error(err))
 	}
+	promptRepo := mongodb.NewUserPromptRepository(mongoClient, cfg.Mongo.DBName)
+	if err := promptRepo.EnsureIndexes(context.Background()); err != nil {
+		logger.Global().Fatal("Failed to ensure Prompt Mongo indexes", zap.Error(err))
+	}
 
 	if err := seed.NewAdminSeeder(userRepo).Run(context.Background(), cfg.Seed.ForceAdminReset); err != nil {
 		logger.Global().Fatal("Failed to seed admin user", zap.Error(err))
@@ -102,6 +108,7 @@ func main() {
 	agentHandler := handler.NewAgentHandler(agentRepo)
 	projectHandler := handler.NewProjectHandler(projectRepo, projectService)
 	taskHandler := handler.NewTaskHandler(taskRepo, projectRepo)
+	promptHandler := handler.NewPromptHandler(promptRepo, usecaseprompt.NewService(promptRepo))
 
 	srv := server.New(cfg)
 	v1 := srv.Router().Group("/api/v1")
@@ -115,6 +122,7 @@ func main() {
 		agentHandler.Register(private)
 		projectHandler.Register(private)
 		taskHandler.Register(private)
+		promptHandler.Register(private)
 	}
 
 	health.NewHandler(mongoClient, redisClient, rmqClient).Register(srv.Router())
@@ -142,3 +150,4 @@ var _ user.Repository = (*mongodb.UserRepository)(nil)
 var _ agent.Repository = (*mongodb.AgentRepository)(nil)
 var _ project.ProjectRepository = (*mongodb.ProjectRepository)(nil)
 var _ project.TaskRepository = (*mongodb.TaskRepository)(nil)
+var _ prompt.UserPromptRepository = (*mongodb.UserPromptRepository)(nil)
