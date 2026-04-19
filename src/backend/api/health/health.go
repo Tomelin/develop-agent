@@ -80,9 +80,12 @@ func (h *Handler) performChecks(ctx context.Context) Response {
 	// Mongo Check
 	if h.mongoClient != nil {
 		lat, err := h.mongoClient.Ping(ctx)
-		components["mongodb"] = formatResult(lat, err)
+		result := formatResult(lat, err)
+		components["mongodb"] = result
 		if err != nil {
 			overallStatus = Unhealthy
+		} else if result.Status == Degraded && overallStatus == Healthy {
+			overallStatus = Degraded
 		}
 	} else {
 		components["mongodb"] = CheckResult{Status: Unhealthy, Error: "not configured"}
@@ -92,9 +95,12 @@ func (h *Handler) performChecks(ctx context.Context) Response {
 	// Redis Check
 	if h.redisClient != nil {
 		lat, err := h.redisClient.Ping(ctx)
-		components["redis"] = formatResult(lat, err)
+		result := formatResult(lat, err)
+		components["redis"] = result
 		if err != nil {
 			overallStatus = Unhealthy
+		} else if result.Status == Degraded && overallStatus == Healthy {
+			overallStatus = Degraded
 		}
 	} else {
 		components["redis"] = CheckResult{Status: Unhealthy, Error: "not configured"}
@@ -104,9 +110,12 @@ func (h *Handler) performChecks(ctx context.Context) Response {
 	// RabbitMQ Check
 	if h.rmqClient != nil {
 		lat, err := h.rmqClient.Ping()
-		components["rabbitmq"] = formatResult(lat, err)
+		result := formatResult(lat, err)
+		components["rabbitmq"] = result
 		if err != nil {
 			overallStatus = Unhealthy
+		} else if result.Status == Degraded && overallStatus == Healthy {
+			overallStatus = Degraded
 		}
 	} else {
 		components["rabbitmq"] = CheckResult{Status: Unhealthy, Error: "not configured"}
