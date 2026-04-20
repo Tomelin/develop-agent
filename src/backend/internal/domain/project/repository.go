@@ -33,5 +33,6 @@ type TaskRepository interface {
 	EnsureIndexes(ctx context.Context) error
 	BulkCreate(ctx context.Context, tasks []*Task) error
 	ListByProject(ctx context.Context, filter TaskListFilter) ([]*Task, error)
+	RoadmapSummary(ctx context.Context, projectID string) (*RoadmapSummary, error)
 	UpdateStatus(ctx context.Context, projectID, taskID string, status TaskStatus) error
 }

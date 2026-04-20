@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -33,6 +35,10 @@ type updateProjectRequest struct {
 	Description string `json:"description"`
 }
 
+type approveRoadmapRequest struct {
+	Roadmap json.RawMessage `json:"roadmap"`
+}
+
 func NewProjectHandler(repo project.ProjectRepository, service *projectuc.Service) *ProjectHandler {
 	return &ProjectHandler{repo: repo, service: service, validate: validator.New(validator.WithRequiredStructEnabled())}
 }
@@ -49,6 +55,9 @@ func (h *ProjectHandler) Register(rg *gin.RouterGroup) {
 	projects.POST("/:id/archive", h.Archive)
 	projects.POST("/:id/phases/:phaseNumber/start", h.StartPhase)
 	projects.POST("/:id/phases/:phaseNumber/tracks/:track/approve", h.ApprovePhaseTrack)
+	projects.POST("/:id/phases/4/approve-roadmap", h.ApproveRoadmap)
+	projects.GET("/:id/roadmap/summary", h.RoadmapSummary)
+	projects.GET("/:id/roadmap/export", h.ExportRoadmap)
 }
 
 func (h *ProjectHandler) List(c *gin.Context) {
@@ -214,6 +223,63 @@ func (h *ProjectHandler) ApprovePhaseTrack(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, phase)
+}
+
+func (h *ProjectHandler) ApproveRoadmap(c *gin.Context) {
+	var req approveRoadmapRequest
+	if err := c.ShouldBindJSON(&req); err != nil || len(req.Roadmap) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request: roadmap is required"})
+		return
+	}
+	phase, result, err := h.service.ApproveRoadmapPhase(c.Request.Context(), c.Param("id"), mustUserID(c), req.Roadmap)
+	if err != nil {
+		if validationErr, ok := err.(*project.RoadmapValidationError); ok {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "roadmap validation failed", "issues": validationErr.Issues})
+			return
+		}
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"phase": phase, "ingested": result, "event": gin.H{"type": "ROADMAP_INGESTED", "taskCount": result.TaskCount, "phaseCount": result.PhaseCount, "epicCount": result.EpicCount}})
+}
+
+func (h *ProjectHandler) RoadmapSummary(c *gin.Context) {
+	if !h.canAccessProject(c) {
+		return
+	}
+	summary, err := h.service.RoadmapSummary(c.Request.Context(), c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, summary)
+}
+
+func (h *ProjectHandler) ExportRoadmap(c *gin.Context) {
+	if !h.canAccessProject(c) {
+		return
+	}
+	format := strings.ToLower(strings.TrimSpace(c.DefaultQuery("format", "json")))
+	contentType, filename, payload, err := h.service.ExportRoadmap(c.Request.Context(), c.Param("id"), format)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+	c.Data(http.StatusOK, contentType, payload)
+}
+
+func (h *ProjectHandler) canAccessProject(c *gin.Context) bool {
+	p, err := h.repo.FindByID(c.Request.Context(), c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
+		return false
+	}
+	if p.OwnerUserID.Hex() != mustUserID(c) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
+		return false
+	}
+	return true
 }
 
 func mustUserID(c *gin.Context) string {

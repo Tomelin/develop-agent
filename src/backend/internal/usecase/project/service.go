@@ -192,6 +192,48 @@ func (s *Service) ApprovePhaseTrack(ctx context.Context, projectID, ownerID stri
 	return findPhaseByNumber(p, phaseNumber)
 }
 
+func (s *Service) ApproveRoadmapPhase(ctx context.Context, projectID, ownerID string, roadmapJSON []byte) (*domain.PhaseExecution, *RoadmapIngestResult, error) {
+	p, err := s.repo.FindByID(ctx, projectID)
+	if err != nil {
+		return nil, nil, err
+	}
+	if p.OwnerUserID.Hex() != ownerID {
+		return nil, nil, errors.New("project not found")
+	}
+	phase, err := findPhaseByNumber(p, 4)
+	if err != nil {
+		return nil, nil, err
+	}
+	if phase.Status != domain.PhaseInProgress && phase.Status != domain.PhaseReview {
+		return nil, nil, errors.New("phase 4 must be IN_PROGRESS or REVIEW before approval")
+	}
+
+	ingester := NewRoadmapIngester(s.tasks)
+	result, canonical, err := ingester.Ingest(ctx, projectID, roadmapJSON)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if phase.Status == domain.PhaseInProgress {
+		if err := s.stateMachine.TransitionPhaseStatus(p, 4, domain.PhaseReview, "roadmap validated", ownerID); err != nil {
+			return nil, nil, err
+		}
+	}
+	if err := s.stateMachine.TransitionPhaseStatus(p, 4, domain.PhaseCompleted, "roadmap approved and ingested", ownerID); err != nil {
+		return nil, nil, err
+	}
+	p.RoadmapJSON = canonical
+
+	if err := s.repo.Update(ctx, p); err != nil {
+		return nil, nil, err
+	}
+	updatedPhase, err := findPhaseByNumber(p, 4)
+	if err != nil {
+		return nil, nil, err
+	}
+	return updatedPhase, result, nil
+}
+
 func (s *Service) GetPhaseTracks(ctx context.Context, projectID, ownerID string, phaseNumber int) ([]domain.TrackExecution, error) {
 	p, err := s.repo.FindByID(ctx, projectID)
 	if err != nil {

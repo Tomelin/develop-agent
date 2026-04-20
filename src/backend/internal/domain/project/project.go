@@ -124,6 +124,7 @@ type Project struct {
 	OwnerUserID        bson.ObjectID      `bson:"owner_user_id" json:"owner_user_id"`
 	DynamicModeEnabled bool               `bson:"dynamic_mode_enabled" json:"dynamic_mode_enabled"`
 	SpecMD             string             `bson:"spec_md,omitempty" json:"spec_md,omitempty"`
+	RoadmapJSON        string             `bson:"roadmap_json,omitempty" json:"roadmap_json,omitempty"`
 	TotalTokensUsed    int64              `bson:"total_tokens_used" json:"total_tokens_used"`
 	TotalCostUSD       float64            `bson:"total_cost_usd" json:"total_cost_usd"`
 	TransitionHistory  []TransitionRecord `bson:"transition_history,omitempty" json:"transition_history,omitempty"`
@@ -142,6 +143,8 @@ type Task struct {
 	Type            TaskType       `bson:"type" json:"type"`
 	Complexity      TaskComplexity `bson:"complexity" json:"complexity"`
 	EstimatedHours  float64        `bson:"estimated_hours" json:"estimated_hours"`
+	Track           Track          `bson:"track,omitempty" json:"track,omitempty"`
+	Dependencies    []string       `bson:"dependencies,omitempty" json:"dependencies,omitempty"`
 	Status          TaskStatus     `bson:"status" json:"status"`
 	AssignedAgentID string         `bson:"assigned_agent_id,omitempty" json:"assigned_agent_id,omitempty"`
 	CreatedAt       time.Time      `bson:"created_at" json:"created_at"`
