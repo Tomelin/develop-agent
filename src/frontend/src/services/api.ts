@@ -2,6 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1',
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -38,18 +39,26 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        // Implement token refresh logic here
-        // Example: await refreshToken()
-        // And then update localStorage and the failed request's header
-        // For now, we'll just redirect to login if the refresh isn't implemented
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login';
+        const refreshResponse = await api.post('/auth/refresh');
+        const newAccessToken = refreshResponse.data?.access_token;
+
+        if (newAccessToken && typeof window !== 'undefined') {
+          localStorage.setItem('access_token', newAccessToken);
+          originalRequest.headers = originalRequest.headers ?? {};
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          return api(originalRequest);
         }
       } catch (refreshError) {
         if (typeof window !== 'undefined') {
+          localStorage.removeItem('access_token');
           window.location.href = '/login';
         }
         return Promise.reject(refreshError);
+      }
+
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('access_token');
+        window.location.href = '/login';
       }
     }
 
