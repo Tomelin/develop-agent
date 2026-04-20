@@ -81,16 +81,24 @@ type AgentTriad struct {
 }
 
 type PhaseExecution struct {
-	PhaseNumber   int         `bson:"phase_number" json:"phase_number"`
-	PhaseName     string      `bson:"phase_name" json:"phase_name"`
-	Status        PhaseStatus `bson:"status" json:"status"`
-	Track         Track       `bson:"track" json:"track"`
-	FeedbackCount int         `bson:"feedback_count" json:"feedback_count"`
-	FeedbackLimit int         `bson:"feedback_limit" json:"feedback_limit"`
-	Artifacts     []string    `bson:"artifacts,omitempty" json:"artifacts,omitempty"`
-	AgentTriad    AgentTriad  `bson:"agent_triad" json:"agent_triad"`
-	StartedAt     *time.Time  `bson:"started_at,omitempty" json:"started_at,omitempty"`
-	CompletedAt   *time.Time  `bson:"completed_at,omitempty" json:"completed_at,omitempty"`
+	PhaseNumber   int              `bson:"phase_number" json:"phase_number"`
+	PhaseName     string           `bson:"phase_name" json:"phase_name"`
+	Status        PhaseStatus      `bson:"status" json:"status"`
+	Track         Track            `bson:"track" json:"track"`
+	Tracks        []TrackExecution `bson:"tracks,omitempty" json:"tracks,omitempty"`
+	FeedbackCount int              `bson:"feedback_count" json:"feedback_count"`
+	FeedbackLimit int              `bson:"feedback_limit" json:"feedback_limit"`
+	Artifacts     []string         `bson:"artifacts,omitempty" json:"artifacts,omitempty"`
+	AgentTriad    AgentTriad       `bson:"agent_triad" json:"agent_triad"`
+	StartedAt     *time.Time       `bson:"started_at,omitempty" json:"started_at,omitempty"`
+	CompletedAt   *time.Time       `bson:"completed_at,omitempty" json:"completed_at,omitempty"`
+}
+
+type TrackExecution struct {
+	Track       Track       `bson:"track" json:"track"`
+	Status      PhaseStatus `bson:"status" json:"status"`
+	StartedAt   *time.Time  `bson:"started_at,omitempty" json:"started_at,omitempty"`
+	CompletedAt *time.Time  `bson:"completed_at,omitempty" json:"completed_at,omitempty"`
 }
 
 type TransitionRecord struct {
@@ -171,14 +179,21 @@ func NewProject(name, description string, flowType FlowType, ownerUserID bson.Ob
 func defaultPhases() []PhaseExecution {
 	return []PhaseExecution{
 		{PhaseNumber: 1, PhaseName: "Criação do Projeto", Status: PhasePending, Track: TrackFull, FeedbackLimit: 10},
-		{PhaseNumber: 2, PhaseName: "Engenharia de Software", Status: PhasePending, Track: TrackFull, FeedbackLimit: 5},
-		{PhaseNumber: 3, PhaseName: "Arquitetura de Software", Status: PhasePending, Track: TrackFull, FeedbackLimit: 5},
+		{PhaseNumber: 2, PhaseName: "Engenharia de Software", Status: PhasePending, Track: TrackFull, Tracks: defaultSplitTracks(), FeedbackLimit: 5},
+		{PhaseNumber: 3, PhaseName: "Arquitetura de Software", Status: PhasePending, Track: TrackFull, Tracks: defaultSplitTracks(), FeedbackLimit: 5},
 		{PhaseNumber: 4, PhaseName: "Planejamento", Status: PhasePending, Track: TrackFull, FeedbackLimit: 5},
 		{PhaseNumber: 5, PhaseName: "Desenvolvimento", Status: PhasePending, Track: TrackFull, FeedbackLimit: 5},
 		{PhaseNumber: 6, PhaseName: "Testes", Status: PhasePending, Track: TrackFull, FeedbackLimit: 5},
 		{PhaseNumber: 7, PhaseName: "Segurança", Status: PhasePending, Track: TrackFull, FeedbackLimit: 5},
 		{PhaseNumber: 8, PhaseName: "Documentação", Status: PhasePending, Track: TrackFull, FeedbackLimit: 5},
 		{PhaseNumber: 9, PhaseName: "DevOps e Deploy", Status: PhasePending, Track: TrackFull, FeedbackLimit: 5},
+	}
+}
+
+func defaultSplitTracks() []TrackExecution {
+	return []TrackExecution{
+		{Track: TrackFrontend, Status: PhasePending},
+		{Track: TrackBackend, Status: PhasePending},
 	}
 }
 

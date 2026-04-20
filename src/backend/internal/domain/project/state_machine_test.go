@@ -50,3 +50,33 @@ func TestProjectStateMachine_PhaseTransitions(t *testing.T) {
 		t.Fatalf("expected current phase 2, got %d", p.CurrentPhaseNumber)
 	}
 }
+
+func TestProjectStateMachine_TrackTransitions(t *testing.T) {
+	sm := NewProjectStateMachine()
+	p, _ := NewProject("Projeto", "desc", FlowSoftware, bson.NewObjectID(), false, nil)
+
+	if err := sm.TransitionTrackStatus(p, 2, TrackFrontend, PhaseInProgress, "start frontend", "u1"); err != nil {
+		t.Fatalf("expected frontend track start, got %v", err)
+	}
+	if err := sm.TransitionTrackStatus(p, 2, TrackBackend, PhaseInProgress, "start backend", "u1"); err != nil {
+		t.Fatalf("expected backend track start, got %v", err)
+	}
+	if err := sm.TransitionTrackStatus(p, 2, TrackFrontend, PhaseReview, "frontend ready", "u1"); err != nil {
+		t.Fatalf("expected frontend track review, got %v", err)
+	}
+	if err := sm.TransitionTrackStatus(p, 2, TrackFrontend, PhaseCompleted, "frontend approved", "u1"); err != nil {
+		t.Fatalf("expected frontend track completion, got %v", err)
+	}
+	if p.Phases[1].Status == PhaseCompleted {
+		t.Fatal("phase should not complete until both tracks are completed")
+	}
+	if err := sm.TransitionTrackStatus(p, 2, TrackBackend, PhaseReview, "backend ready", "u1"); err != nil {
+		t.Fatalf("expected backend track review, got %v", err)
+	}
+	if err := sm.TransitionTrackStatus(p, 2, TrackBackend, PhaseCompleted, "backend approved", "u1"); err != nil {
+		t.Fatalf("expected backend track completion, got %v", err)
+	}
+	if p.Phases[1].Status != PhaseCompleted {
+		t.Fatalf("expected phase completed, got %s", p.Phases[1].Status)
+	}
+}

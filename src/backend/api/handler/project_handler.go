@@ -41,11 +41,14 @@ func (h *ProjectHandler) Register(rg *gin.RouterGroup) {
 	projects := rg.Group("/projects")
 	projects.GET("", h.List)
 	projects.GET("/:id", h.GetByID)
+	projects.GET("/:id/phases/:phaseNumber/tracks", h.GetPhaseTracks)
 	projects.POST("", h.Create)
 	projects.PUT("/:id", h.Update)
 	projects.POST("/:id/pause", h.Pause)
 	projects.POST("/:id/resume", h.Resume)
 	projects.POST("/:id/archive", h.Archive)
+	projects.POST("/:id/phases/:phaseNumber/start", h.StartPhase)
+	projects.POST("/:id/phases/:phaseNumber/tracks/:track/approve", h.ApprovePhaseTrack)
 }
 
 func (h *ProjectHandler) List(c *gin.Context) {
@@ -164,6 +167,53 @@ func (h *ProjectHandler) Archive(c *gin.Context) {
 		return
 	}
 	c.Status(http.StatusNoContent)
+}
+
+func (h *ProjectHandler) StartPhase(c *gin.Context) {
+	phaseNumber, err := strconv.Atoi(c.Param("phaseNumber"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid phase number"})
+		return
+	}
+	phase, err := h.service.StartPhase(c.Request.Context(), c.Param("id"), mustUserID(c), phaseNumber)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, phase)
+}
+
+func (h *ProjectHandler) GetPhaseTracks(c *gin.Context) {
+	phaseNumber, err := strconv.Atoi(c.Param("phaseNumber"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid phase number"})
+		return
+	}
+	tracks, err := h.service.GetPhaseTracks(c.Request.Context(), c.Param("id"), mustUserID(c), phaseNumber)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"tracks": tracks})
+}
+
+func (h *ProjectHandler) ApprovePhaseTrack(c *gin.Context) {
+	phaseNumber, err := strconv.Atoi(c.Param("phaseNumber"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid phase number"})
+		return
+	}
+	track := project.Track(strings.ToUpper(strings.TrimSpace(c.Param("track"))))
+	if track != project.TrackFrontend && track != project.TrackBackend && track != project.TrackFull {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid track"})
+		return
+	}
+	phase, err := h.service.ApprovePhaseTrack(c.Request.Context(), c.Param("id"), mustUserID(c), phaseNumber, track)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, phase)
 }
 
 func mustUserID(c *gin.Context) string {
