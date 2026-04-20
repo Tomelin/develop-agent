@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -20,6 +21,10 @@ type ProjectHandler struct {
 	repo     project.ProjectRepository
 	service  *projectuc.Service
 	validate *validator.Validate
+}
+
+type scopedProjectReader interface {
+	FindByIDScoped(ctx context.Context, id, ownerID, organizationID string) (*project.Project, error)
 }
 
 type createProjectRequest struct {
@@ -86,22 +91,13 @@ func (h *ProjectHandler) List(c *gin.Context) {
 }
 
 func (h *ProjectHandler) GetByID(c *gin.Context) {
-	userID := mustUserID(c)
-	p, err := h.repo.FindByID(c.Request.Context(), c.Param("id"))
+	p, err := h.findProjectForCurrentUser(c, c.Param("id"))
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
 			return
 		}
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
-		return
-	}
-	if p.OwnerUserID.Hex() != userID {
-		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
-		return
-	}
-	if p.OrganizationID.Hex() != mustOrganizationID(c) {
-		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
 		return
 	}
 	c.JSON(http.StatusOK, p)
@@ -140,17 +136,8 @@ func (h *ProjectHandler) Update(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
-	userID := mustUserID(c)
-	p, err := h.repo.FindByID(c.Request.Context(), c.Param("id"))
+	p, err := h.findProjectForCurrentUser(c, c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
-		return
-	}
-	if p.OwnerUserID.Hex() != userID {
-		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
-		return
-	}
-	if p.OrganizationID.Hex() != mustOrganizationID(c) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
 		return
 	}
@@ -290,16 +277,8 @@ func (h *ProjectHandler) UpdateBudget(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
-	p, err := h.repo.FindByID(c.Request.Context(), c.Param("id"))
+	p, err := h.findProjectForCurrentUser(c, c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
-		return
-	}
-	if p.OwnerUserID.Hex() != mustUserID(c) {
-		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
-		return
-	}
-	if p.OrganizationID.Hex() != mustOrganizationID(c) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
 		return
 	}
@@ -313,20 +292,26 @@ func (h *ProjectHandler) UpdateBudget(c *gin.Context) {
 }
 
 func (h *ProjectHandler) canAccessProject(c *gin.Context) bool {
-	p, err := h.repo.FindByID(c.Request.Context(), c.Param("id"))
+	_, err := h.findProjectForCurrentUser(c, c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
 		return false
 	}
-	if p.OwnerUserID.Hex() != mustUserID(c) {
-		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
-		return false
-	}
-	if p.OrganizationID.Hex() != mustOrganizationID(c) {
-		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
-		return false
-	}
 	return true
+}
+
+func (h *ProjectHandler) findProjectForCurrentUser(c *gin.Context, projectID string) (*project.Project, error) {
+	if scoped, ok := h.repo.(scopedProjectReader); ok {
+		return scoped.FindByIDScoped(c.Request.Context(), projectID, mustUserID(c), mustOrganizationID(c))
+	}
+	p, err := h.repo.FindByID(c.Request.Context(), projectID)
+	if err != nil {
+		return nil, err
+	}
+	if p.OwnerUserID.Hex() != mustUserID(c) || p.OrganizationID.Hex() != mustOrganizationID(c) {
+		return nil, mongo.ErrNoDocuments
+	}
+	return p, nil
 }
 
 func mustUserID(c *gin.Context) string {

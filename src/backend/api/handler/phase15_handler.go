@@ -103,6 +103,10 @@ func (h *Phase15Handler) canAccessProject(c *gin.Context) bool {
 		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
 		return false
 	}
+	if p.OrganizationID.Hex() != mustOrganizationID(c) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
+		return false
+	}
 	return true
 }
 
