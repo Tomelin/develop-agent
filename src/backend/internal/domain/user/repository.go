@@ -6,7 +6,9 @@ type Repository interface {
 	Create(ctx context.Context, user *User) error
 	FindByID(ctx context.Context, id string) (*User, error)
 	FindByEmail(ctx context.Context, email string) (*User, error)
+	FindByOrganizationAndEmail(ctx context.Context, organizationID, email string) (*User, error)
 	Update(ctx context.Context, user *User) error
 	SoftDelete(ctx context.Context, id string) error
 	List(ctx context.Context) ([]*User, error)
+	ListByOrganization(ctx context.Context, organizationID string) ([]*User, error)
 }

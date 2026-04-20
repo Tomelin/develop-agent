@@ -19,6 +19,7 @@ import (
 	"github.com/develop-agent/backend/internal/domain/agent"
 	"github.com/develop-agent/backend/internal/domain/billing"
 	"github.com/develop-agent/backend/internal/domain/interview"
+	"github.com/develop-agent/backend/internal/domain/organization"
 	"github.com/develop-agent/backend/internal/domain/project"
 	"github.com/develop-agent/backend/internal/domain/prompt"
 	"github.com/develop-agent/backend/internal/domain/user"
@@ -29,6 +30,7 @@ import (
 	usecaseauth "github.com/develop-agent/backend/internal/usecase/auth"
 	usecasebilling "github.com/develop-agent/backend/internal/usecase/billing"
 	usecaseinterview "github.com/develop-agent/backend/internal/usecase/interview"
+	usecaseorganization "github.com/develop-agent/backend/internal/usecase/organization"
 	usecaseproject "github.com/develop-agent/backend/internal/usecase/project"
 	usecaseprompt "github.com/develop-agent/backend/internal/usecase/prompt"
 	"github.com/develop-agent/backend/pkg/agentsdk"
@@ -54,19 +56,19 @@ func main() {
 	if err != nil {
 		logger.Global().Fatal("Failed to connect to MongoDB", zap.Error(err))
 	}
-	defer mongoClient.Close(context.Background())
+	defer func() { _ = mongoClient.Close(context.Background()) }()
 
 	redisClient, err := redis.NewAdapter(cfg.Redis.Addr, cfg.Redis.Password)
 	if err != nil {
 		logger.Global().Fatal("Failed to connect to Redis", zap.Error(err))
 	}
-	defer redisClient.Close()
+	defer func() { _ = redisClient.Close() }()
 
 	rmqClient, err := rabbitmq.NewAdapter(cfg.RabbitMQ.URL)
 	if err != nil {
 		logger.Global().Error("Failed to connect to RabbitMQ", zap.Error(err))
 	} else {
-		defer rmqClient.Close()
+		defer func() { _ = rmqClient.Close() }()
 	}
 
 	userRepo := mongodb.NewUserRepository(mongoClient, cfg.Mongo.DBName)
@@ -101,6 +103,10 @@ func main() {
 	if err := billingRepo.EnsureIndexes(context.Background()); err != nil {
 		logger.Global().Fatal("Failed to ensure Billing Mongo indexes", zap.Error(err))
 	}
+	orgRepo := mongodb.NewOrganizationRepository(mongoClient, cfg.Mongo.DBName)
+	if err := orgRepo.EnsureIndexes(context.Background()); err != nil {
+		logger.Global().Fatal("Failed to ensure Organization Mongo indexes", zap.Error(err))
+	}
 
 	if err := seed.NewAdminSeeder(userRepo).Run(context.Background(), cfg.Seed.ForceAdminReset); err != nil {
 		logger.Global().Fatal("Failed to seed admin user", zap.Error(err))
@@ -126,6 +132,7 @@ func main() {
 	authHandler := handler.NewAuthHandler(authService)
 	userHandler := handler.NewUserHandler(userRepo)
 	agentHandler := handler.NewAgentHandler(agentRepo)
+	organizationHandler := handler.NewOrganizationHandler(usecaseorganization.NewService(orgRepo, userRepo))
 	projectHandler := handler.NewProjectHandler(projectRepo, projectService)
 	taskHandler := handler.NewTaskHandler(taskRepo, projectRepo)
 	phase5Handler := handler.NewPhase5Handler(projectRepo, developmentService)
@@ -163,6 +170,7 @@ func main() {
 		private.Use(middleware.OrganizationMiddleware())
 		userHandler.Register(private)
 		agentHandler.Register(private)
+		organizationHandler.Register(private)
 		projectHandler.Register(private)
 		taskHandler.Register(private)
 		phase5Handler.Register(private)
@@ -214,3 +222,4 @@ var _ project.CodeFileRepository = (*mongodb.CodeFileRepository)(nil)
 var _ prompt.UserPromptRepository = (*mongodb.UserPromptRepository)(nil)
 var _ interview.Repository = (*mongodb.InterviewRepository)(nil)
 var _ billing.Repository = (*mongodb.BillingRepository)(nil)
+var _ organization.Repository = (*mongodb.OrganizationRepository)(nil)

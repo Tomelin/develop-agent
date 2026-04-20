@@ -70,7 +70,7 @@ func (r *ProjectRepository) ListRecent(ctx context.Context, limit int64) ([]*pro
 	if err != nil {
 		return nil, err
 	}
-	defer cur.Close(ctx)
+	defer func() { _ = cur.Close(ctx) }()
 	out := make([]*project.Project, 0, limit)
 	for cur.Next(ctx) {
 		var p project.Project
@@ -202,7 +202,7 @@ func (r *ProjectRepository) findProjects(ctx context.Context, query bson.M, opts
 	if err != nil {
 		return nil, 0, err
 	}
-	defer cur.Close(ctx)
+	defer func() { _ = cur.Close(ctx) }()
 
 	items := make([]*project.Project, 0)
 	for cur.Next(ctx) {

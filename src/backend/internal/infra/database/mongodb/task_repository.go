@@ -68,7 +68,7 @@ func (r *TaskRepository) ListByProject(ctx context.Context, filter project.TaskL
 	if err != nil {
 		return nil, err
 	}
-	defer cur.Close(ctx)
+	defer func() { _ = cur.Close(ctx) }()
 
 	out := make([]*project.Task, 0)
 	for cur.Next(ctx) {
@@ -102,7 +102,7 @@ func (r *TaskRepository) RoadmapSummary(ctx context.Context, projectID string) (
 	if err != nil {
 		return nil, err
 	}
-	defer cur.Close(ctx)
+	defer func() { _ = cur.Close(ctx) }()
 
 	type grouped struct {
 		ID    string  `bson:"_id"`

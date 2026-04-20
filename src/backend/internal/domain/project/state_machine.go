@@ -136,6 +136,8 @@ func (sm *ProjectStateMachine) isValidProjectTransition(from, to ProjectStatus) 
 		return to == ProjectPaused || to == ProjectCompleted || to == ProjectArchived
 	case ProjectPaused:
 		return to == ProjectInProgress
+	case ProjectCompleted, ProjectArchived:
+		return false
 	default:
 		return false
 	}
@@ -151,6 +153,8 @@ func (sm *ProjectStateMachine) isValidPhaseTransition(from, to PhaseStatus) bool
 		return to == PhaseInProgress || to == PhaseCompleted
 	case PhaseRejected:
 		return to == PhaseInProgress
+	case PhaseCompleted:
+		return false
 	default:
 		return false
 	}

@@ -80,5 +80,12 @@ func (a *Adapter) SetNX(ctx context.Context, key string, value interface{}, ttl 
 	if err != nil {
 		return false, err
 	}
-	return a.Client.SetNX(ctx, key, bytes, ttl).Result()
+	res, err := a.Client.SetArgs(ctx, key, bytes, redis.SetArgs{
+		TTL:  ttl,
+		Mode: "NX",
+	}).Result()
+	if err != nil {
+		return false, err
+	}
+	return res == "OK", nil
 }

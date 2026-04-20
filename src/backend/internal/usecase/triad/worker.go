@@ -52,11 +52,7 @@ func (w *Worker) Start() error {
 			return
 		}
 
-		_, err := w.Orchestrator.Run(ctx, ExecutionInput{
-			ProjectID: job.ProjectID,
-			Prompt:    job.Prompt,
-			Feedback:  job.Feedback,
-		})
+		_, err := w.Orchestrator.Run(ctx, ExecutionInput(job))
 		if err != nil {
 			_ = msg.Nack(false, true)
 			return

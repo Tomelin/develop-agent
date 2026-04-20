@@ -119,7 +119,7 @@ func (r *AgentRepository) List(ctx context.Context, filter agent.ListFilter) ([]
 	if err != nil {
 		return nil, err
 	}
-	defer cur.Close(ctx)
+	defer func() { _ = cur.Close(ctx) }()
 
 	var items []*agent.Agent
 	for cur.Next(ctx) {

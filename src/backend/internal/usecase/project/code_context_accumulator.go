@@ -32,9 +32,7 @@ func (a *CodeContextAccumulator) Build(files []*domain.CodeFile) domain.CodeCont
 			Language: normalizeLanguage(f.Path, f.Language),
 			Purpose:  inferPurpose(f.Path),
 		})
-		for _, s := range extractSymbols(f.Path, f.Content) {
-			manifest.Symbols = append(manifest.Symbols, s)
-		}
+		manifest.Symbols = append(manifest.Symbols, extractSymbols(f.Path, f.Content)...)
 		for _, dep := range extractDependencies(f.Content) {
 			depSet[dep] = struct{}{}
 		}
@@ -82,17 +80,25 @@ func approximateTokens(m domain.CodeContextManifest) int {
 func trimManifest(m domain.CodeContextManifest, maxTokens int) domain.CodeContextManifest {
 	out := m
 	for approximateTokens(out) > maxTokens {
+		trimmed := false
 		switch {
 		case len(out.Symbols) > 0:
 			out.Symbols = out.Symbols[:len(out.Symbols)-1]
+			trimmed = true
 		case len(out.Files) > 0:
 			out.Files = out.Files[:len(out.Files)-1]
+			trimmed = true
 		case len(out.Dependencies) > 0:
 			out.Dependencies = out.Dependencies[:len(out.Dependencies)-1]
+			trimmed = true
 		case len(out.EnvironmentHints) > 0:
 			out.EnvironmentHints = out.EnvironmentHints[:len(out.EnvironmentHints)-1]
+			trimmed = true
 		default:
-			break
+			return out
+		}
+		if !trimmed {
+			return out
 		}
 	}
 	out.ApproxTokens = approximateTokens(out)

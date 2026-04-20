@@ -48,6 +48,8 @@ func (h *StatusHandler) Get(c *gin.Context) {
 
 	status := statusOperational
 	switch snap.Status {
+	case health.Healthy:
+		status = statusOperational
 	case health.Degraded:
 		status = statusDegraded
 	case health.Unhealthy:

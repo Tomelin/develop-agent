@@ -24,7 +24,7 @@ func (f fakeSecurityRunner) Run(_ context.Context, dir, name string, args ...str
 func TestPhase7RunAudit(t *testing.T) {
 	tmp := t.TempDir()
 	backend := filepath.Join(tmp, "src/backend")
-	if err := os.MkdirAll(filepath.Join(backend, "api/server"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(backend, "api/server"), 0o750); err != nil {
 		t.Fatal(err)
 	}
 	serverFile := `package server
@@ -32,7 +32,7 @@ func CORSMiddleware() {
 	_ = "Access-Control-Allow-Origin"
 	_ = "*"
 }`
-	if err := os.WriteFile(filepath.Join(backend, "api/server/server.go"), []byte(serverFile), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(backend, "api/server/server.go"), []byte(serverFile), 0o600); err != nil {
 		t.Fatal(err)
 	}
 

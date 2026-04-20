@@ -108,7 +108,7 @@ func ParseTimeRange(fromRaw, toRaw string) (*time.Time, *time.Time, error) {
 }
 
 func loadPricingTable(path string) (domain.ModelPricingTable, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) // #nosec G304 -- path comes from trusted server config
 	if err != nil {
 		return domain.ModelPricingTable{}, err
 	}

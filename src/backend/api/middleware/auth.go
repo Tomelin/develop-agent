@@ -27,10 +27,11 @@ func AuthMiddleware(authService *usecaseauth.Service) gin.HandlerFunc {
 		}
 
 		c.Set(UserContextKey, gin.H{
-			"user_id":         claims.UserID,
-			"organization_id": claims.OrganizationID,
-			"email":           claims.Email,
-			"role":            claims.Role,
+			"user_id":           claims.UserID,
+			"organization_id":   claims.OrganizationID,
+			"organization_role": claims.OrganizationRole,
+			"email":             claims.Email,
+			"role":              claims.Role,
 		})
 		c.Next()
 	}
@@ -84,5 +85,28 @@ func RoleMiddleware(roles ...string) gin.HandlerFunc {
 			}
 		}
 		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "insufficient role"})
+	}
+}
+
+func OrganizationRoleMiddleware(roles ...string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctxRaw, ok := c.Get(UserContextKey)
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing user context"})
+			return
+		}
+		userCtx, ok := ctxRaw.(gin.H)
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid user context"})
+			return
+		}
+		role, _ := userCtx["organization_role"].(string)
+		for _, allowed := range roles {
+			if role == allowed {
+				c.Next()
+				return
+			}
+		}
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "insufficient organization role"})
 	}
 }

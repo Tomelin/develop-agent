@@ -420,7 +420,7 @@ func (s *Phase7Service) scanSecrets(ctx context.Context, root string) []domain.S
 }
 
 func parseGitleaksFromFile(path string) []domain.SecurityFinding {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) // #nosec G304 -- path is generated internally for scanner report file
 	if err != nil || len(data) == 0 {
 		return nil
 	}
@@ -463,7 +463,7 @@ func intFromAny(v any) int {
 func (s *Phase7Service) checkSecurityConfiguration(_ context.Context, backendDir string) []domain.SecurityFinding {
 	findings := make([]domain.SecurityFinding, 0)
 	serverFile := filepath.Join(backendDir, "api/server/server.go")
-	content, err := os.ReadFile(serverFile)
+	content, err := os.ReadFile(serverFile) // #nosec G304 -- file path is deterministic inside backend source tree
 	if err != nil {
 		return findings
 	}

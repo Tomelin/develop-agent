@@ -57,6 +57,23 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*user.U
 	return &out, nil
 }
 
+func (r *UserRepository) FindByOrganizationAndEmail(ctx context.Context, organizationID, email string) (*user.User, error) {
+	orgID, err := bson.ObjectIDFromHex(organizationID)
+	if err != nil {
+		return nil, err
+	}
+	filter := bson.M{
+		"organization_id": orgID,
+		"email":           strings.ToLower(strings.TrimSpace(email)),
+		"deleted_at":      bson.M{"$exists": false},
+	}
+	var out user.User
+	if err := r.col.FindOne(ctx, filter).Decode(&out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 func (r *UserRepository) Update(ctx context.Context, u *user.User) error {
 	u.UpdatedAt = time.Now().UTC()
 	filter := bson.M{"_id": u.ID, "deleted_at": bson.M{"$exists": false}}
@@ -107,7 +124,33 @@ func (r *UserRepository) List(ctx context.Context) ([]*user.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer cur.Close(ctx)
+	defer func() { _ = cur.Close(ctx) }()
+
+	var users []*user.User
+	for cur.Next(ctx) {
+		var u user.User
+		if err := cur.Decode(&u); err != nil {
+			return nil, err
+		}
+		users = append(users, &u)
+	}
+	return users, cur.Err()
+}
+
+func (r *UserRepository) ListByOrganization(ctx context.Context, organizationID string) ([]*user.User, error) {
+	orgID, err := bson.ObjectIDFromHex(organizationID)
+	if err != nil {
+		return nil, err
+	}
+	filter := bson.M{"organization_id": orgID, "deleted_at": bson.M{"$exists": false}}
+	opts := options.Find().
+		SetProjection(bson.M{"password_hash": 0}).
+		SetSort(bson.D{{Key: "created_at", Value: 1}})
+	cur, err := r.col.Find(ctx, filter, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = cur.Close(ctx) }()
 
 	var users []*user.User
 	for cur.Next(ctx) {
