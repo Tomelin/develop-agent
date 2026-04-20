@@ -134,6 +134,8 @@ type Project struct {
 	RoadmapJSON        string             `bson:"roadmap_json,omitempty" json:"roadmap_json,omitempty"`
 	TotalTokensUsed    int64              `bson:"total_tokens_used" json:"total_tokens_used"`
 	TotalCostUSD       float64            `bson:"total_cost_usd" json:"total_cost_usd"`
+	BudgetUSD          float64            `bson:"budget_usd,omitempty" json:"budget_usd,omitempty"`
+	BudgetAlerted80    bool               `bson:"budget_alerted_80,omitempty" json:"budget_alerted_80,omitempty"`
 	TransitionHistory  []TransitionRecord `bson:"transition_history,omitempty" json:"transition_history,omitempty"`
 	Phase5Mode         ExecutionMode      `bson:"phase_5_mode,omitempty" json:"phase_5_mode,omitempty"`
 	CreatedAt          time.Time          `bson:"created_at" json:"created_at"`

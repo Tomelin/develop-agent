@@ -1,0 +1,22 @@
+last_updated: "2026-04-20"
+models:
+  - provider: OPENAI
+    model: gpt-4o
+    prompt_price_per_million_tokens: 5.00
+    completion_price_per_million_tokens: 15.00
+  - provider: OPENAI
+    model: gpt-4o-mini
+    prompt_price_per_million_tokens: 0.15
+    completion_price_per_million_tokens: 0.60
+  - provider: ANTHROPIC
+    model: claude-3-5-sonnet
+    prompt_price_per_million_tokens: 3.00
+    completion_price_per_million_tokens: 15.00
+  - provider: GOOGLE
+    model: gemini-1.5-pro
+    prompt_price_per_million_tokens: 3.50
+    completion_price_per_million_tokens: 10.50
+  - provider: OLLAMA
+    model: llama3.1:8b
+    prompt_price_per_million_tokens: 0.00
+    completion_price_per_million_tokens: 0.00

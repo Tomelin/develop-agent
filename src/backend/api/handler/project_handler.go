@@ -39,6 +39,10 @@ type approveRoadmapRequest struct {
 	Roadmap json.RawMessage `json:"roadmap"`
 }
 
+type updateBudgetRequest struct {
+	BudgetUSD float64 `json:"budget_usd" validate:"gte=0"`
+}
+
 func NewProjectHandler(repo project.ProjectRepository, service *projectuc.Service) *ProjectHandler {
 	return &ProjectHandler{repo: repo, service: service, validate: validator.New(validator.WithRequiredStructEnabled())}
 }
@@ -58,6 +62,7 @@ func (h *ProjectHandler) Register(rg *gin.RouterGroup) {
 	projects.POST("/:id/phases/4/approve-roadmap", h.ApproveRoadmap)
 	projects.GET("/:id/roadmap/summary", h.RoadmapSummary)
 	projects.GET("/:id/roadmap/export", h.ExportRoadmap)
+	projects.PUT("/:id/budget", h.UpdateBudget)
 }
 
 func (h *ProjectHandler) List(c *gin.Context) {
@@ -267,6 +272,30 @@ func (h *ProjectHandler) ExportRoadmap(c *gin.Context) {
 	}
 	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
 	c.Data(http.StatusOK, contentType, payload)
+}
+
+func (h *ProjectHandler) UpdateBudget(c *gin.Context) {
+	var req updateBudgetRequest
+	if err := c.ShouldBindJSON(&req); err != nil || h.validate.Struct(req) != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		return
+	}
+	p, err := h.repo.FindByID(c.Request.Context(), c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
+		return
+	}
+	if p.OwnerUserID.Hex() != mustUserID(c) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
+		return
+	}
+	p.BudgetUSD = req.BudgetUSD
+	p.BudgetAlerted80 = false
+	if err := h.repo.Update(c.Request.Context(), p); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update budget"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"project_id": p.ID.Hex(), "budget_usd": p.BudgetUSD})
 }
 
 func (h *ProjectHandler) canAccessProject(c *gin.Context) bool {
