@@ -55,7 +55,7 @@ func (r *UserPromptRepository) FindByUserAndGroup(ctx context.Context, userID st
 	if err != nil {
 		return nil, err
 	}
-	defer cur.Close(ctx)
+	defer func() { _ = cur.Close(ctx) }()
 	out := make([]*prompt.UserPrompt, 0)
 	for cur.Next(ctx) {
 		var p prompt.UserPrompt
@@ -83,7 +83,7 @@ func (r *UserPromptRepository) FindAllByUser(ctx context.Context, filter prompt.
 	if err != nil {
 		return nil, err
 	}
-	defer cur.Close(ctx)
+	defer func() { _ = cur.Close(ctx) }()
 	out := make([]*prompt.UserPrompt, 0)
 	for cur.Next(ctx) {
 		var p prompt.UserPrompt

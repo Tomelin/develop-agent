@@ -61,7 +61,7 @@ func (r *CodeFileRepository) ListByProject(ctx context.Context, projectID string
 	if err != nil {
 		return nil, err
 	}
-	defer cur.Close(ctx)
+	defer func() { _ = cur.Close(ctx) }()
 
 	out := make([]*project.CodeFile, 0)
 	for cur.Next(ctx) {

@@ -13,7 +13,7 @@ func main() {
 
 	for _, name := range files {
 		path := filepath.Join(base, name)
-		raw, err := os.ReadFile(path)
+		raw, err := os.ReadFile(path) // #nosec G304 -- path is constrained to local static fixtures
 		if err != nil {
 			panic(err)
 		}

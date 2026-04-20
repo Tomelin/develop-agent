@@ -25,7 +25,7 @@ func TestTokenManagerGenerateAndParse(t *testing.T) {
 	if err != nil {
 		t.Fatalf("new token manager: %v", err)
 	}
-	tok, _, err := m.GenerateAccessToken("u1", "org1", "u@x.com", "ADMIN")
+	tok, _, err := m.GenerateAccessToken("u1", "org1", "OWNER", "u@x.com", "ADMIN")
 	if err != nil {
 		t.Fatalf("generate: %v", err)
 	}
@@ -38,6 +38,9 @@ func TestTokenManagerGenerateAndParse(t *testing.T) {
 	}
 	if claims.OrganizationID != "org1" {
 		t.Fatalf("unexpected organization id: %s", claims.OrganizationID)
+	}
+	if claims.OrganizationRole != "OWNER" {
+		t.Fatalf("unexpected organization role: %s", claims.OrganizationRole)
 	}
 }
 

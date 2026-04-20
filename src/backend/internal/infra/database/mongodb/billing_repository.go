@@ -129,7 +129,7 @@ func (r *BillingRepository) List(ctx context.Context, filter billing.QueryFilter
 	if err != nil {
 		return nil, 0, err
 	}
-	defer cur.Close(ctx)
+	defer func() { _ = cur.Close(ctx) }()
 	items := make([]billing.BillingRecord, 0)
 	for cur.Next(ctx) {
 		var rec billing.BillingRecord
@@ -146,7 +146,7 @@ func (r *BillingRepository) aggregateGrouped(ctx context.Context, pipeline mongo
 	if err != nil {
 		return nil, err
 	}
-	defer cur.Close(ctx)
+	defer func() { _ = cur.Close(ctx) }()
 	out := make([]billing.GroupedCostItem, 0)
 	for cur.Next(ctx) {
 		row := struct {

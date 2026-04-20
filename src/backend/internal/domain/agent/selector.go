@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"sort"
 	"time"
 )
 
@@ -42,13 +43,13 @@ func NewSelectorService(repo Repository, audit AuditLogger, dynamicModeOn bool, 
 		repo:          repo,
 		audit:         audit,
 		dynamicModeOn: dynamicModeOn,
-		rand:          rand.New(rand.NewSource(time.Now().UnixNano())),
+		rand:          rand.New(rand.NewSource(time.Now().UnixNano())), // #nosec G404 -- non-cryptographic selection for load balancing
 		fixedBySkill:  fixed,
 	}
 }
 
 func (s *Service) WithSeed(seed int64) *Service {
-	s.rand = rand.New(rand.NewSource(seed))
+	s.rand = rand.New(rand.NewSource(seed)) // #nosec G404 -- deterministic pseudo-random for testability
 	return s
 }
 
@@ -132,6 +133,7 @@ func (s *Service) pickTriadSelection(agents []*Agent) TriadSelection {
 	for p := range byProvider {
 		providers = append(providers, p)
 	}
+	sort.Slice(providers, func(i, j int) bool { return providers[i] < providers[j] })
 	s.rand.Shuffle(len(providers), func(i, j int) { providers[i], providers[j] = providers[j], providers[i] })
 
 	selected := make([]*Agent, 0, 3)

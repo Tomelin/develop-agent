@@ -1,4 +1,7 @@
+version: "2"
+
 run:
+  go: "1.24"
   timeout: 5m
   issues-exit-code: 1
   tests: true
@@ -58,7 +61,10 @@ linters:
     - errcheck
     - govet
     - staticcheck
-    - gofmt
-    - goimports
     - gosec
     - exhaustive
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
