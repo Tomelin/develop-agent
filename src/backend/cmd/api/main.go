@@ -148,6 +148,9 @@ func main() {
 		logger.Global().Fatal("Failed to load billing pricing table", zap.Error(err))
 	}
 	billingHandler := handler.NewBillingHandler(billingService)
+	phase19Service := usecaseproject.NewPhase19Service(projectRepo, codeFileRepo)
+	phase19Handler := handler.NewPhase19Handler(projectRepo, phase19Service)
+	adminQualityHandler := handler.NewAdminQualityHandler(usecaseproject.NewAdminQualityReportService(projectRepo, codeFileRepo))
 
 	srv := server.New(cfg)
 	v1 := srv.Router().Group("/api/v1")
@@ -167,9 +170,14 @@ func main() {
 		phase13Handler.Register(private)
 		phase14Handler.Register(private)
 		phase15Handler.Register(private)
+		phase19Handler.Register(private)
 		promptHandler.Register(private)
 		interviewHandler.Register(private)
 		billingHandler.Register(private)
+
+		adminOnly := private.Group("")
+		adminOnly.Use(middleware.RoleMiddleware("ADMIN"))
+		adminQualityHandler.Register(adminOnly)
 	}
 
 	healthHandler := health.NewHandler(mongoClient, redisClient, rmqClient)

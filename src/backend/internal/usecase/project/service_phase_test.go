@@ -26,6 +26,12 @@ func (m *memProjectRepo) FindByOwner(context.Context, domainproject.ProjectListF
 func (m *memProjectRepo) FindDashboardByOwner(context.Context, domainproject.ProjectListFilter) ([]*domainproject.Project, int64, error) {
 	return nil, 0, nil
 }
+func (m *memProjectRepo) ListRecent(context.Context, int64) ([]*domainproject.Project, error) {
+	if m.project == nil {
+		return []*domainproject.Project{}, nil
+	}
+	return []*domainproject.Project{m.project}, nil
+}
 func (m *memProjectRepo) Update(_ context.Context, p *domainproject.Project) error {
 	m.project = p
 	return nil

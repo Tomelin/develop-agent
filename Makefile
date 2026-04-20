@@ -1,4 +1,4 @@
-.PHONY: help dev build test test-integration lint migrate docs clean
+.PHONY: help dev build test test-integration lint migrate docs clean seed-test-data
 
 # Variables
 GO := go
@@ -44,3 +44,7 @@ docs:
 clean:
 	rm -rf src/backend/bin
 	$(DOCKER_COMPOSE) down -v
+
+## seed-test-data: Validate and prepare representative test fixtures
+seed-test-data:
+	cd src/backend && $(GO) run ./cmd/seedtestdata/main.go
