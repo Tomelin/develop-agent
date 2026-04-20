@@ -17,6 +17,7 @@ import (
 	"github.com/develop-agent/backend/api/server"
 	"github.com/develop-agent/backend/config"
 	"github.com/develop-agent/backend/internal/domain/agent"
+	"github.com/develop-agent/backend/internal/domain/billing"
 	"github.com/develop-agent/backend/internal/domain/interview"
 	"github.com/develop-agent/backend/internal/domain/project"
 	"github.com/develop-agent/backend/internal/domain/prompt"
@@ -26,6 +27,7 @@ import (
 	"github.com/develop-agent/backend/internal/infra/messaging/rabbitmq"
 	"github.com/develop-agent/backend/internal/infra/seed"
 	usecaseauth "github.com/develop-agent/backend/internal/usecase/auth"
+	usecasebilling "github.com/develop-agent/backend/internal/usecase/billing"
 	usecaseinterview "github.com/develop-agent/backend/internal/usecase/interview"
 	usecaseproject "github.com/develop-agent/backend/internal/usecase/project"
 	usecaseprompt "github.com/develop-agent/backend/internal/usecase/prompt"
@@ -93,6 +95,10 @@ func main() {
 	if err := interviewRepo.EnsureIndexes(context.Background()); err != nil {
 		logger.Global().Fatal("Failed to ensure Interview Mongo indexes", zap.Error(err))
 	}
+	billingRepo := mongodb.NewBillingRepository(mongoClient, cfg.Mongo.DBName)
+	if err := billingRepo.EnsureIndexes(context.Background()); err != nil {
+		logger.Global().Fatal("Failed to ensure Billing Mongo indexes", zap.Error(err))
+	}
 
 	if err := seed.NewAdminSeeder(userRepo).Run(context.Background(), cfg.Seed.ForceAdminReset); err != nil {
 		logger.Global().Fatal("Failed to seed admin user", zap.Error(err))
@@ -134,6 +140,11 @@ func main() {
 	promptHandler := handler.NewPromptHandler(promptRepo, usecaseprompt.NewService(promptRepo))
 	interviewService := usecaseinterview.NewService(interviewRepo, projectRepo, mock.New(), nil)
 	interviewHandler := handler.NewInterviewHandler(interviewService)
+	billingService, err := usecasebilling.NewService(billingRepo, cfg.Billing.PricingFile)
+	if err != nil {
+		logger.Global().Fatal("Failed to load billing pricing table", zap.Error(err))
+	}
+	billingHandler := handler.NewBillingHandler(billingService)
 
 	srv := server.New(cfg)
 	v1 := srv.Router().Group("/api/v1")
@@ -155,6 +166,7 @@ func main() {
 		phase15Handler.Register(private)
 		promptHandler.Register(private)
 		interviewHandler.Register(private)
+		billingHandler.Register(private)
 	}
 
 	health.NewHandler(mongoClient, redisClient, rmqClient).Register(srv.Router())
@@ -185,3 +197,4 @@ var _ project.TaskRepository = (*mongodb.TaskRepository)(nil)
 var _ project.CodeFileRepository = (*mongodb.CodeFileRepository)(nil)
 var _ prompt.UserPromptRepository = (*mongodb.UserPromptRepository)(nil)
 var _ interview.Repository = (*mongodb.InterviewRepository)(nil)
+var _ billing.Repository = (*mongodb.BillingRepository)(nil)

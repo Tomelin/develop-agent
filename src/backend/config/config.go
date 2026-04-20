@@ -17,6 +17,7 @@ type Config struct {
 	Agent    AgentConfig
 	Auth     AuthConfig
 	Seed     SeedConfig
+	Billing  BillingConfig
 }
 
 // AppConfig holds application specific configurations.
@@ -66,6 +67,10 @@ type SeedConfig struct {
 	ForceAdminReset bool `mapstructure:"force_admin_reset"`
 }
 
+type BillingConfig struct {
+	PricingFile string `mapstructure:"pricing_file"`
+}
+
 // Load loads the configuration from a file and environment variables.
 func Load(path string) (*Config, error) {
 	viper.SetConfigFile(path)
@@ -92,6 +97,7 @@ func Load(path string) (*Config, error) {
 	viper.SetDefault("auth.access_ttl_minutes", 15)
 	viper.SetDefault("auth.refresh_ttl_days", 7)
 	viper.SetDefault("seed.force_admin_reset", false)
+	viper.SetDefault("billing.pricing_file", "config/model_pricing.yaml")
 
 	// Attempt to read the config file
 	if err := viper.ReadInConfig(); err != nil {
