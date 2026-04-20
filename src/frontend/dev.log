@@ -1,0 +1,103 @@
+
+> frontend@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.4 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+✓ Ready in 591ms
+
+○ Compiling /login ...
+ GET /login 200 in 8.4s (next.js: 7.1s, application-code: 1351ms)
+ GET /dashboard 200 in 2.8s (next.js: 2.4s, application-code: 434ms)
+ GET /login?redirect=%2Fdashboard 200 in 83ms (next.js: 5ms, application-code: 78ms)
+ GET /projects/new 200 in 1857ms (next.js: 1695ms, application-code: 163ms)
+ GET /login?redirect=%2Fprojects%2Fnew 200 in 41ms (next.js: 5ms, application-code: 36ms)
+ GET / 200 in 881ms (next.js: 777ms, application-code: 105ms)
+[browser] Image with src "http://localhost:3000/vercel.svg" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio.
+ GET /dashboard 200 in 92ms (next.js: 7ms, application-code: 85ms)
+ GET /login?redirect=%2Fdashboard 200 in 41ms (next.js: 4ms, application-code: 37ms)
+ GET /projects/new 200 in 117ms (next.js: 7ms, application-code: 109ms)
+ GET /login?redirect=%2Fprojects%2Fnew 200 in 82ms (next.js: 5ms, application-code: 77ms)
+ GET /login 200 in 81ms (next.js: 4ms, application-code: 77ms)
+ GET /dashboard 200 in 86ms (next.js: 3ms, application-code: 83ms)
+ GET /login?redirect=%2Fdashboard 200 in 40ms (next.js: 4ms, application-code: 36ms)
+ GET /projects/new 200 in 73ms (next.js: 8ms, application-code: 65ms)
+ GET /login?redirect=%2Fprojects%2Fnew 200 in 31ms (next.js: 4ms, application-code: 27ms)
+ GET /login 200 in 98ms (next.js: 6ms, application-code: 93ms)
+ GET /dashboard 200 in 104ms (next.js: 3ms, application-code: 101ms)
+[browser] In HTML, <button> cannot be a descendant of <button>.
+This will cause a hydration error.
+
+  ...
+    <ClientSegmentRoot Component={function DashboardLayout} slots={{children:{...}}} ...>
+      <DashboardLayout params={Promise}>
+        <PrivateRoute>
+          <div className="min-h-scre...">
+            <header className="sticky top...">
+              <div className="container ...">
+                <div>
+                <div className="flex items...">
+                  <DropdownMenu>
+                    <MenuRoot data-slot="dropdown-menu">
+                      <FloatingTree externalTree={{nodesRef:{...}, ...}}>
+                        <DropdownMenuTrigger>
+                          <MenuTrigger data-slot="dropdown-m...">
+>                           <button
+>                             type="button"
+>                             onClick={function}
+>                             onMouseDown={function}
+>                             onKeyDown={function}
+>                             onKeyUp={function}
+>                             onPointerDown={function}
+>                             tabIndex={0}
+>                             disabled={false}
+>                             aria-haspopup="menu"
+>                             id="base-ui-_r_4_"
+>                             data-slot="dropdown-menu-trigger"
+>                             ref={function}
+>                           >
+                              <Button variant="ghost" className="relative h...">
+                                <Button data-slot="button" className={"group/bu..."}>
+>                                 <button
+>                                   type="button"
+>                                   onClick={function}
+>                                   onMouseDown={function}
+>                                   onKeyDown={function}
+>                                   onKeyUp={function}
+>                                   onPointerDown={function}
+>                                   tabIndex={0}
+>                                   disabled={false}
+>                                   data-slot="button"
+>                                   ref={function}
+>                                   className={"group/button inline-flex shrink-0 items-center justify-center border ..."}
+>                                 >
+                        ...
+            ...
+
+[browser] <button> cannot contain a nested <button>.
+See this log for the ancestor stack trace.
+ GET /projects/new 200 in 144ms (next.js: 3ms, application-code: 141ms)
+ GET /projects/proj-123 200 in 2.1s (next.js: 1917ms, application-code: 133ms)
+ GET /login 200 in 84ms (next.js: 6ms, application-code: 78ms)
+ GET /projects/proj-123 200 in 133ms (next.js: 43ms, application-code: 90ms)
+[browser] Failed to fetch tasks AxiosError: Request failed with status code 500
+    at async Object.getTasks (src/services/project.ts:50:22)
+    at async KanbanBoard.useEffect.fetchTasks (src/components/projects/KanbanBoard.tsx:65:26)
+  48 |       size: size.toString(),
+  49 |     });
+> 50 |     const response = await api.get(`/projects/${projectId}/tasks`, { params });
+     |                      ^
+  51 |     return response.data;
+  52 |   },
+  53 | (src/components/projects/KanbanBoard.tsx:68:17)
+[browser] Failed to fetch tasks AxiosError: Request failed with status code 500
+    at async Object.getTasks (src/services/project.ts:50:22)
+    at async KanbanBoard.useEffect.fetchTasks (src/components/projects/KanbanBoard.tsx:65:26)
+  48 |       size: size.toString(),
+  49 |     });
+> 50 |     const response = await api.get(`/projects/${projectId}/tasks`, { params });
+     |                      ^
+  51 |     return response.data;
+  52 |   },
+  53 | (src/components/projects/KanbanBoard.tsx:68:17)
