@@ -81,6 +81,86 @@ func (r *TaskRepository) ListByProject(ctx context.Context, filter project.TaskL
 	return out, cur.Err()
 }
 
+func (r *TaskRepository) RoadmapSummary(ctx context.Context, projectID string) (*project.RoadmapSummary, error) {
+	pid, err := bson.ObjectIDFromHex(projectID)
+	if err != nil {
+		return nil, err
+	}
+	pipeline := mongo.Pipeline{
+		bson.D{{Key: "$match", Value: bson.M{"project_id": pid}}},
+		bson.D{{Key: "$facet", Value: bson.M{
+			"totals":        []bson.M{{"$group": bson.M{"_id": nil, "count": bson.M{"$sum": 1}, "critical_hours": bson.M{"$sum": bson.M{"$cond": []any{bson.M{"$eq": []any{"$complexity", project.ComplexityCritical}}, "$estimated_hours", 0}}}}}},
+			"by_type":       []bson.M{{"$group": bson.M{"_id": "$type", "count": bson.M{"$sum": 1}, "hours": bson.M{"$sum": "$estimated_hours"}}}},
+			"by_complexity": []bson.M{{"$group": bson.M{"_id": "$complexity", "count": bson.M{"$sum": 1}}}},
+			"by_phase":      []bson.M{{"$group": bson.M{"_id": "$phase_id", "hours": bson.M{"$sum": "$estimated_hours"}}}},
+			"phase_count":   []bson.M{{"$group": bson.M{"_id": "$phase_id"}}, {"$count": "count"}},
+			"epic_count":    []bson.M{{"$group": bson.M{"_id": "$epic_id"}}, {"$count": "count"}},
+		}}},
+	}
+
+	cur, err := r.col.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close(ctx)
+
+	type grouped struct {
+		ID    string  `bson:"_id"`
+		Count int64   `bson:"count"`
+		Hours float64 `bson:"hours"`
+	}
+	type total struct {
+		Count         int64   `bson:"count"`
+		CriticalHours float64 `bson:"critical_hours"`
+	}
+	type countOnly struct {
+		Count int64 `bson:"count"`
+	}
+	var rows []struct {
+		Totals       []total     `bson:"totals"`
+		ByType       []grouped   `bson:"by_type"`
+		ByComplexity []grouped   `bson:"by_complexity"`
+		ByPhase      []grouped   `bson:"by_phase"`
+		PhaseCount   []countOnly `bson:"phase_count"`
+		EpicCount    []countOnly `bson:"epic_count"`
+	}
+	if err := cur.All(ctx, &rows); err != nil {
+		return nil, err
+	}
+	summary := &project.RoadmapSummary{
+		TotalByType:       map[project.TaskType]int64{},
+		TotalByComplexity: map[project.TaskComplexity]int64{},
+		HoursByType:       map[project.TaskType]float64{},
+		HoursByPhase:      map[string]float64{},
+	}
+	if len(rows) == 0 {
+		return summary, nil
+	}
+	row := rows[0]
+	if len(row.Totals) > 0 {
+		summary.TotalTasks = row.Totals[0].Count
+		summary.EstimatedCriticalPathHR = row.Totals[0].CriticalHours
+	}
+	for _, item := range row.ByType {
+		t := project.TaskType(item.ID)
+		summary.TotalByType[t] = item.Count
+		summary.HoursByType[t] = item.Hours
+	}
+	for _, item := range row.ByComplexity {
+		summary.TotalByComplexity[project.TaskComplexity(item.ID)] = item.Count
+	}
+	for _, item := range row.ByPhase {
+		summary.HoursByPhase[item.ID] = item.Hours
+	}
+	if len(row.PhaseCount) > 0 {
+		summary.PhaseCount = row.PhaseCount[0].Count
+	}
+	if len(row.EpicCount) > 0 {
+		summary.EpicCount = row.EpicCount[0].Count
+	}
+	return summary, nil
+}
+
 func (r *TaskRepository) UpdateStatus(ctx context.Context, projectID, taskID string, status project.TaskStatus) error {
 	pid, err := bson.ObjectIDFromHex(projectID)
 	if err != nil {

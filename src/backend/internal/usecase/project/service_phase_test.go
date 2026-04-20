@@ -45,6 +45,9 @@ func (n *noopTaskRepo) BulkCreate(context.Context, []*domainproject.Task) error 
 func (n *noopTaskRepo) ListByProject(context.Context, domainproject.TaskListFilter) ([]*domainproject.Task, error) {
 	return nil, nil
 }
+func (n *noopTaskRepo) RoadmapSummary(context.Context, string) (*domainproject.RoadmapSummary, error) {
+	return &domainproject.RoadmapSummary{}, nil
+}
 func (n *noopTaskRepo) UpdateStatus(context.Context, string, string, domainproject.TaskStatus) error {
 	return nil
 }
