@@ -16,6 +16,7 @@ type ProjectRepository interface {
 	FindByID(ctx context.Context, id string) (*Project, error)
 	FindByOwner(ctx context.Context, filter ProjectListFilter) ([]*Project, int64, error)
 	FindDashboardByOwner(ctx context.Context, filter ProjectListFilter) ([]*Project, int64, error)
+	ListRecent(ctx context.Context, limit int64) ([]*Project, error)
 	Update(ctx context.Context, p *Project) error
 	Archive(ctx context.Context, id string, ownerID string) error
 	UpdatePhase(ctx context.Context, projectID, ownerID string, phase PhaseExecution) error

@@ -1,0 +1,8 @@
+[
+  {"month":"2025-11","provider":"OPENAI","model":"gpt-4o","cost_usd":42.10},
+  {"month":"2025-12","provider":"ANTHROPIC","model":"claude-3-5-sonnet","cost_usd":39.60},
+  {"month":"2026-01","provider":"GOOGLE","model":"gemini-2.5-pro","cost_usd":30.20},
+  {"month":"2026-02","provider":"OPENAI","model":"gpt-4o-mini","cost_usd":19.90},
+  {"month":"2026-03","provider":"OLLAMA","model":"llama3.1","cost_usd":0.00},
+  {"month":"2026-04","provider":"OPENAI","model":"gpt-4o","cost_usd":44.70}
+]

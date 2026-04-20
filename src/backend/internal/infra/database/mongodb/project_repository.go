@@ -62,6 +62,26 @@ func (r *ProjectRepository) FindDashboardByOwner(ctx context.Context, filter pro
 	return r.findProjects(ctx, query, opts)
 }
 
+func (r *ProjectRepository) ListRecent(ctx context.Context, limit int64) ([]*project.Project, error) {
+	if limit <= 0 || limit > 500 {
+		limit = 200
+	}
+	cur, err := r.col.Find(ctx, bson.M{}, options.Find().SetSort(bson.M{"updated_at": -1}).SetLimit(limit))
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close(ctx)
+	out := make([]*project.Project, 0, limit)
+	for cur.Next(ctx) {
+		var p project.Project
+		if err := cur.Decode(&p); err != nil {
+			return nil, err
+		}
+		out = append(out, &p)
+	}
+	return out, cur.Err()
+}
+
 func (r *ProjectRepository) Update(ctx context.Context, p *project.Project) error {
 	p.UpdatedAt = time.Now().UTC()
 	res, err := r.col.ReplaceOne(ctx, bson.M{"_id": p.ID, "owner_user_id": p.OwnerUserID}, p)

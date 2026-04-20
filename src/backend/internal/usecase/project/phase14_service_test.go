@@ -87,6 +87,13 @@ func (m *multiProjectRepo) FindByOwner(context.Context, domainproject.ProjectLis
 func (m *multiProjectRepo) FindDashboardByOwner(context.Context, domainproject.ProjectListFilter) ([]*domainproject.Project, int64, error) {
 	return nil, 0, nil
 }
+func (m *multiProjectRepo) ListRecent(context.Context, int64) ([]*domainproject.Project, error) {
+	out := make([]*domainproject.Project, 0, len(m.items))
+	for _, p := range m.items {
+		out = append(out, p)
+	}
+	return out, nil
+}
 func (m *multiProjectRepo) Update(_ context.Context, p *domainproject.Project) error {
 	m.items[p.ID.Hex()] = p
 	return nil

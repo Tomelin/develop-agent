@@ -1,0 +1,6 @@
+[
+  {"name":"Fluxo A Draft","flow_type":"SOFTWARE","status":"DRAFT","dynamic_mode_enabled":false},
+  {"name":"Fluxo A Em execução","flow_type":"SOFTWARE","status":"IN_PROGRESS","dynamic_mode_enabled":true},
+  {"name":"Fluxo B Concluído","flow_type":"LANDING_PAGE","status":"COMPLETED","dynamic_mode_enabled":false},
+  {"name":"Fluxo C Arquivado","flow_type":"MARKETING","status":"ARCHIVED","dynamic_mode_enabled":true}
+]
