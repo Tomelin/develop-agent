@@ -2,7 +2,14 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1',
+<<<<<<< feat/phase-02-frontend-17026144929788359576
   withCredentials: true, // Importante para enviar os cookies (refresh token)
+=======
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+>>>>>>> main
 });
 
 let isRefreshing = false;
@@ -60,6 +67,7 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
+<<<<<<< feat/phase-02-frontend-17026144929788359576
         const { data } = await axios.post(
           `${api.defaults.baseURL}/auth/refresh`,
           {},
@@ -71,6 +79,16 @@ api.interceptors.response.use(
 
         if (originalRequest.headers) {
            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+=======
+        const refreshResponse = await api.post('/auth/refresh');
+        const newAccessToken = refreshResponse.data?.access_token;
+
+        if (newAccessToken && typeof window !== 'undefined') {
+          localStorage.setItem('access_token', newAccessToken);
+          originalRequest.headers = originalRequest.headers ?? {};
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          return api(originalRequest);
+>>>>>>> main
         }
         processQueue(null, newAccessToken);
 
@@ -81,11 +99,21 @@ api.interceptors.response.use(
 
         // Redirecionar para login apenas no client-side
         if (typeof window !== 'undefined') {
+<<<<<<< feat/phase-02-frontend-17026144929788359576
             window.location.href = '/login';
+=======
+          localStorage.removeItem('access_token');
+          window.location.href = '/login';
+>>>>>>> main
         }
         return Promise.reject(err);
       } finally {
         isRefreshing = false;
+      }
+
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('access_token');
+        window.location.href = '/login';
       }
     }
 

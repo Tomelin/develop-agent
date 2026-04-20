@@ -54,6 +54,23 @@ services:
     networks:
       - backend-net
 
+  frontend:
+    build:
+      context: ./src/frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src/frontend:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+    networks:
+      - backend-net
+    depends_on:
+      - backend
+
 networks:
   backend-net:
     driver: bridge
