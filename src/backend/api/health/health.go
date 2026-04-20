@@ -56,7 +56,7 @@ func (h *Handler) Live(c *gin.Context) {
 }
 
 func (h *Handler) Ready(c *gin.Context) {
-	resp := h.performChecks(c.Request.Context())
+	resp := h.Snapshot(c.Request.Context())
 	if resp.Status != Healthy {
 		c.JSON(http.StatusServiceUnavailable, resp)
 		return
@@ -65,7 +65,7 @@ func (h *Handler) Ready(c *gin.Context) {
 }
 
 func (h *Handler) CheckAll(c *gin.Context) {
-	resp := h.performChecks(c.Request.Context())
+	resp := h.Snapshot(c.Request.Context())
 	if resp.Status != Healthy {
 		c.JSON(http.StatusServiceUnavailable, resp)
 		return
@@ -73,7 +73,7 @@ func (h *Handler) CheckAll(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-func (h *Handler) performChecks(ctx context.Context) Response {
+func (h *Handler) Snapshot(ctx context.Context) Response {
 	components := make(map[string]CheckResult)
 	overallStatus := Healthy
 

@@ -31,9 +31,11 @@ import (
 	usecaseinterview "github.com/develop-agent/backend/internal/usecase/interview"
 	usecaseproject "github.com/develop-agent/backend/internal/usecase/project"
 	usecaseprompt "github.com/develop-agent/backend/internal/usecase/prompt"
+	"github.com/develop-agent/backend/pkg/agentsdk"
 	"github.com/develop-agent/backend/pkg/agentsdk/mock"
 	pkgauth "github.com/develop-agent/backend/pkg/auth"
 	"github.com/develop-agent/backend/pkg/logger"
+	"github.com/develop-agent/backend/pkg/observability"
 	"github.com/gin-gonic/gin"
 )
 
@@ -138,7 +140,8 @@ func main() {
 	phase15Service := usecaseproject.NewPhase15Service(projectRepo, codeFileRepo)
 	phase15Handler := handler.NewPhase15Handler(projectRepo, phase15Service)
 	promptHandler := handler.NewPromptHandler(promptRepo, usecaseprompt.NewService(promptRepo))
-	interviewService := usecaseinterview.NewService(interviewRepo, projectRepo, mock.New(), nil)
+	interviewProvider := &agentsdk.MetricsProvider{Base: mock.New()}
+	interviewService := usecaseinterview.NewService(interviewRepo, projectRepo, interviewProvider, nil)
 	interviewHandler := handler.NewInterviewHandler(interviewService)
 	billingService, err := usecasebilling.NewService(billingRepo, cfg.Billing.PricingFile)
 	if err != nil {
@@ -169,7 +172,11 @@ func main() {
 		billingHandler.Register(private)
 	}
 
-	health.NewHandler(mongoClient, redisClient, rmqClient).Register(srv.Router())
+	healthHandler := health.NewHandler(mongoClient, redisClient, rmqClient)
+	healthHandler.Register(srv.Router())
+	statusHandler := handler.NewStatusHandler(healthHandler)
+	statusHandler.Register(v1)
+	srv.Router().GET("/metrics", observability.Handler())
 
 	go func() {
 		if err := srv.Start(); err != nil && err != http.ErrServerClosed {
