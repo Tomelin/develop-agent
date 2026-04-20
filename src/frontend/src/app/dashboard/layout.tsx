@@ -3,7 +3,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { PrivateRoute } from "@/components/auth/PrivateRoute";
 import Link from "next/link";
-import { LayoutDashboard, User as UserIcon, LogOut } from "lucide-react";
+import { LayoutDashboard, User as UserIcon, LogOut, Bot } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,6 +41,13 @@ export default function DashboardLayout({
                 >
                   <LayoutDashboard className="mr-2 h-4 w-4" />
                   Dashboard
+                </Link>
+                <Link
+                  href="/dashboard/agents"
+                  className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <Bot className="mr-2 h-4 w-4" />
+                  Agentes
                 </Link>
               </nav>
             </div>
