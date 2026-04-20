@@ -10,7 +10,7 @@ import (
 
 func TestPhase13RunGeneratesArtifactsAndCompletesProject(t *testing.T) {
 	owner := bson.NewObjectID()
-	p, _ := domainproject.NewProject("Phase13", "", domainproject.FlowSoftware, owner, false, nil)
+	p, _ := domainproject.NewProject("Phase13", "", domainproject.FlowSoftware, owner, owner, false, nil)
 	repo := &memProjectRepo{project: p}
 	files := &memCodeFileRepo{}
 	svc := NewPhase13Service(repo, files)

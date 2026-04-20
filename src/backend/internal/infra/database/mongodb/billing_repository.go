@@ -21,8 +21,8 @@ func NewBillingRepository(adapter *Adapter, dbName string) *BillingRepository {
 
 func (r *BillingRepository) EnsureIndexes(ctx context.Context) error {
 	_, err := r.col.Indexes().CreateMany(ctx, []mongo.IndexModel{
-		{Keys: bson.D{{Key: "user_id", Value: 1}, {Key: "project_id", Value: 1}}},
-		{Keys: bson.D{{Key: "user_id", Value: 1}, {Key: "timestamp", Value: -1}}},
+		{Keys: bson.D{{Key: "organization_id", Value: 1}, {Key: "user_id", Value: 1}, {Key: "project_id", Value: 1}}},
+		{Keys: bson.D{{Key: "organization_id", Value: 1}, {Key: "user_id", Value: 1}, {Key: "timestamp", Value: -1}}},
 		{Keys: bson.D{{Key: "project_id", Value: 1}, {Key: "phase_number", Value: 1}}},
 	})
 	return err
@@ -168,7 +168,11 @@ func buildBillingFilter(filter billing.QueryFilter) (bson.M, error) {
 	if err != nil {
 		return nil, err
 	}
-	query := bson.M{"user_id": uid}
+	orgID, err := bson.ObjectIDFromHex(filter.OrganizationID)
+	if err != nil {
+		return nil, err
+	}
+	query := bson.M{"user_id": uid, "organization_id": orgID}
 	if filter.ProjectID != "" {
 		pid, err := bson.ObjectIDFromHex(filter.ProjectID)
 		if err != nil {

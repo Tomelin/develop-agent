@@ -70,11 +70,12 @@ func (h *ProjectHandler) List(c *gin.Context) {
 	page, _ := strconv.ParseInt(c.DefaultQuery("page", "1"), 10, 64)
 	limit, _ := strconv.ParseInt(c.DefaultQuery("limit", "20"), 10, 64)
 	filter := project.ProjectListFilter{
-		OwnerID:  userID,
-		Status:   project.ProjectStatus(strings.ToUpper(strings.TrimSpace(c.Query("status")))),
-		FlowType: project.FlowType(strings.ToUpper(strings.TrimSpace(c.Query("flow_type")))),
-		Page:     page,
-		Limit:    limit,
+		OwnerID:        userID,
+		OrganizationID: mustOrganizationID(c),
+		Status:         project.ProjectStatus(strings.ToUpper(strings.TrimSpace(c.Query("status")))),
+		FlowType:       project.FlowType(strings.ToUpper(strings.TrimSpace(c.Query("flow_type")))),
+		Page:           page,
+		Limit:          limit,
 	}
 	items, total, err := h.repo.FindDashboardByOwner(c.Request.Context(), filter)
 	if err != nil {
@@ -99,6 +100,10 @@ func (h *ProjectHandler) GetByID(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
 		return
 	}
+	if p.OrganizationID.Hex() != mustOrganizationID(c) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
+		return
+	}
 	c.JSON(http.StatusOK, p)
 }
 
@@ -118,6 +123,7 @@ func (h *ProjectHandler) Create(c *gin.Context) {
 		Description:        req.Description,
 		FlowType:           req.FlowType,
 		OwnerUserID:        mustUserID(c),
+		OrganizationID:     mustOrganizationID(c),
 		LinkedProjectID:    req.LinkedProjectID,
 		DynamicModeEnabled: req.DynamicModeEnabled,
 	})
@@ -141,6 +147,10 @@ func (h *ProjectHandler) Update(c *gin.Context) {
 		return
 	}
 	if p.OwnerUserID.Hex() != userID {
+		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
+		return
+	}
+	if p.OrganizationID.Hex() != mustOrganizationID(c) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
 		return
 	}
@@ -289,6 +299,10 @@ func (h *ProjectHandler) UpdateBudget(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
 		return
 	}
+	if p.OrganizationID.Hex() != mustOrganizationID(c) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
+		return
+	}
 	p.BudgetUSD = req.BudgetUSD
 	p.BudgetAlerted80 = false
 	if err := h.repo.Update(c.Request.Context(), p); err != nil {
@@ -308,6 +322,10 @@ func (h *ProjectHandler) canAccessProject(c *gin.Context) bool {
 		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
 		return false
 	}
+	if p.OrganizationID.Hex() != mustOrganizationID(c) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
+		return false
+	}
 	return true
 }
 
@@ -315,4 +333,10 @@ func mustUserID(c *gin.Context) string {
 	ctxRaw, _ := c.Get(middleware.UserContextKey)
 	ctx := ctxRaw.(gin.H)
 	return ctx["user_id"].(string)
+}
+
+func mustOrganizationID(c *gin.Context) string {
+	ctxRaw, _ := c.Get(middleware.UserContextKey)
+	ctx := ctxRaw.(gin.H)
+	return ctx["organization_id"].(string)
 }

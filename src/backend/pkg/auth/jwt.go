@@ -12,16 +12,18 @@ import (
 )
 
 type Claims struct {
-	UserID string `json:"user_id"`
-	Email  string `json:"email"`
-	Role   string `json:"role"`
+	UserID         string `json:"user_id"`
+	OrganizationID string `json:"organization_id"`
+	Email          string `json:"email"`
+	Role           string `json:"role"`
 	jwt.RegisteredClaims
 }
 
 type UserContext struct {
-	UserID string
-	Email  string
-	Role   string
+	UserID         string
+	OrganizationID string
+	Email          string
+	Role           string
 }
 
 type TokenManager struct {
@@ -56,13 +58,14 @@ func NewTokenManager(privateKeyB64 string, issuer string, audience string, acces
 	}, nil
 }
 
-func (m *TokenManager) GenerateAccessToken(userID, email, role string) (string, time.Time, error) {
+func (m *TokenManager) GenerateAccessToken(userID, organizationID, email, role string) (string, time.Time, error) {
 	now := time.Now().UTC()
 	exp := now.Add(m.accessTTL)
 	claims := Claims{
-		UserID: userID,
-		Email:  email,
-		Role:   role,
+		UserID:         userID,
+		OrganizationID: organizationID,
+		Email:          email,
+		Role:           role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    m.issuer,
 			Audience:  []string{m.audience},

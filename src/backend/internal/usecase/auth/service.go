@@ -69,7 +69,7 @@ func (s *Service) ValidateAccessToken(token string) (*pkgauth.Claims, error) {
 }
 
 func (s *Service) issueTokens(ctx context.Context, u *user.User) (*LoginResponse, error) {
-	accessToken, accessExp, err := s.tokenManager.GenerateAccessToken(u.ID.Hex(), u.Email, string(u.Role))
+	accessToken, accessExp, err := s.tokenManager.GenerateAccessToken(u.ID.Hex(), u.OrganizationID.Hex(), u.Email, string(u.Role))
 	if err != nil {
 		return nil, err
 	}

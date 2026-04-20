@@ -27,6 +27,7 @@ const (
 
 type BillingRecord struct {
 	ID                             bson.ObjectID `bson:"_id,omitempty" json:"id"`
+	OrganizationID                 bson.ObjectID `bson:"organization_id" json:"organization_id"`
 	ProjectID                      bson.ObjectID `bson:"project_id" json:"project_id"`
 	UserID                         bson.ObjectID `bson:"user_id" json:"user_id"`
 	PhaseNumber                    int           `bson:"phase_number" json:"phase_number"`
@@ -60,13 +61,14 @@ type ModelPricingTable struct {
 }
 
 type QueryFilter struct {
-	UserID    string
-	ProjectID string
-	Provider  string
-	From      *time.Time
-	To        *time.Time
-	Page      int64
-	Limit     int64
+	UserID         string
+	OrganizationID string
+	ProjectID      string
+	Provider       string
+	From           *time.Time
+	To             *time.Time
+	Page           int64
+	Limit          int64
 }
 
 type Summary struct {

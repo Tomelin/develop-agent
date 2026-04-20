@@ -17,22 +17,33 @@ const (
 	RoleUser  Role = "USER"
 )
 
+type OrganizationRole string
+
+const (
+	OrganizationRoleOwner  OrganizationRole = "OWNER"
+	OrganizationRoleAdmin  OrganizationRole = "ADMIN"
+	OrganizationRoleMember OrganizationRole = "MEMBER"
+	OrganizationRoleViewer OrganizationRole = "VIEWER"
+)
+
 var emailRegex = regexp.MustCompile(`^[^\s@]+@[^\s@]+\.[^\s@]+$`)
 
 type User struct {
-	ID           bson.ObjectID     `bson:"_id,omitempty" json:"id"`
-	Name         string            `bson:"name" json:"name"`
-	Email        string            `bson:"email" json:"email"`
-	PasswordHash string            `bson:"password_hash" json:"-"`
-	Role         Role              `bson:"role" json:"role"`
-	Prompts      map[string]string `bson:"prompts,omitempty" json:"prompts,omitempty"`
-	Enabled      bool              `bson:"enabled" json:"enabled"`
-	CreatedAt    time.Time         `bson:"created_at" json:"created_at"`
-	UpdatedAt    time.Time         `bson:"updated_at" json:"updated_at"`
-	DeletedAt    *time.Time        `bson:"deleted_at,omitempty" json:"-"`
+	ID               bson.ObjectID     `bson:"_id,omitempty" json:"id"`
+	OrganizationID   bson.ObjectID     `bson:"organization_id" json:"organization_id"`
+	OrganizationRole OrganizationRole  `bson:"organization_role" json:"organization_role"`
+	Name             string            `bson:"name" json:"name"`
+	Email            string            `bson:"email" json:"email"`
+	PasswordHash     string            `bson:"password_hash" json:"-"`
+	Role             Role              `bson:"role" json:"role"`
+	Prompts          map[string]string `bson:"prompts,omitempty" json:"prompts,omitempty"`
+	Enabled          bool              `bson:"enabled" json:"enabled"`
+	CreatedAt        time.Time         `bson:"created_at" json:"created_at"`
+	UpdatedAt        time.Time         `bson:"updated_at" json:"updated_at"`
+	DeletedAt        *time.Time        `bson:"deleted_at,omitempty" json:"-"`
 }
 
-func New(name, email, password string, role Role) (*User, error) {
+func New(name, email, password string, role Role, organizationID bson.ObjectID, organizationRole OrganizationRole) (*User, error) {
 	if err := ValidateName(name); err != nil {
 		return nil, err
 	}
@@ -50,15 +61,17 @@ func New(name, email, password string, role Role) (*User, error) {
 
 	now := time.Now().UTC()
 	return &User{
-		ID:           bson.NewObjectID(),
-		Name:         strings.TrimSpace(name),
-		Email:        strings.ToLower(strings.TrimSpace(email)),
-		PasswordHash: string(hash),
-		Role:         role,
-		Prompts:      map[string]string{},
-		Enabled:      true,
-		CreatedAt:    now,
-		UpdatedAt:    now,
+		ID:               bson.NewObjectID(),
+		OrganizationID:   organizationID,
+		OrganizationRole: organizationRole,
+		Name:             strings.TrimSpace(name),
+		Email:            strings.ToLower(strings.TrimSpace(email)),
+		PasswordHash:     string(hash),
+		Role:             role,
+		Prompts:          map[string]string{},
+		Enabled:          true,
+		CreatedAt:        now,
+		UpdatedAt:        now,
 	}, nil
 }
 

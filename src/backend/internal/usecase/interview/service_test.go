@@ -64,7 +64,7 @@ func (m *memProjectRepo) UpdateSpecMD(context.Context, string, string, string) e
 
 func TestInterviewCompleteFlow(t *testing.T) {
 	owner := bson.NewObjectID()
-	p, _ := domainproject.NewProject("P", "", domainproject.FlowSoftware, owner, false, nil)
+	p, _ := domainproject.NewProject("P", "", domainproject.FlowSoftware, owner, owner, false, nil)
 	repo := &memInterviewRepo{byProject: map[string]*domaininterview.InterviewSession{}}
 	provider := mock.New(
 		agentsdk.CompletionResponse{Message: agentsdk.Message{Role: agentsdk.RoleAssistant, Content: "pergunta 1"}},
@@ -97,7 +97,7 @@ func TestInterviewCompleteFlow(t *testing.T) {
 
 func TestLimitAndMinimumInteractions(t *testing.T) {
 	owner := bson.NewObjectID()
-	p, _ := domainproject.NewProject("P", "", domainproject.FlowSoftware, owner, false, nil)
+	p, _ := domainproject.NewProject("P", "", domainproject.FlowSoftware, owner, owner, false, nil)
 	repo := &memInterviewRepo{byProject: map[string]*domaininterview.InterviewSession{}}
 	svc := NewService(repo, &memProjectRepo{p: p}, mock.New(), nil)
 	projectID := p.ID.Hex()

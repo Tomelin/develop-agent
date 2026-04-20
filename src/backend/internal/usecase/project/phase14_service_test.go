@@ -10,7 +10,7 @@ import (
 
 func TestPhase14RunWithManualBrief(t *testing.T) {
 	owner := bson.NewObjectID()
-	p, _ := domainproject.NewProject("LP", "", domainproject.FlowLandingPage, owner, false, nil)
+	p, _ := domainproject.NewProject("LP", "", domainproject.FlowLandingPage, owner, owner, false, nil)
 	repo := &memProjectRepo{project: p}
 	files := &memCodeFileRepo{}
 	svc := NewPhase14Service(repo, files)
@@ -45,8 +45,8 @@ func TestPhase14RunWithManualBrief(t *testing.T) {
 
 func TestPhase14RunExtractsLinkedContext(t *testing.T) {
 	owner := bson.NewObjectID()
-	base, _ := domainproject.NewProject("Base", "", domainproject.FlowSoftware, owner, false, nil)
-	landing, _ := domainproject.NewProject("Landing", "", domainproject.FlowLandingPage, owner, false, &base.ID)
+	base, _ := domainproject.NewProject("Base", "", domainproject.FlowSoftware, owner, owner, false, nil)
+	landing, _ := domainproject.NewProject("Landing", "", domainproject.FlowLandingPage, owner, owner, false, &base.ID)
 	files := &projectAwareCodeFileRepo{store: map[string][]*domainproject.CodeFile{
 		base.ID.Hex(): {
 			{ProjectID: base.ID, Path: "VISION.md", Content: "- nome do produto: Produto Alfa\n- problema: onboarding lento\n- público-alvo: PMEs\n- proposta de valor: implantação em 1 dia"},

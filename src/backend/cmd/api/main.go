@@ -160,6 +160,7 @@ func main() {
 
 		private := v1.Group("")
 		private.Use(middleware.AuthMiddleware(authService))
+		private.Use(middleware.OrganizationMiddleware())
 		userHandler.Register(private)
 		agentHandler.Register(private)
 		projectHandler.Register(private)
