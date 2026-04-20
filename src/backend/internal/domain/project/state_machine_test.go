@@ -8,7 +8,7 @@ import (
 
 func TestProjectStateMachine_ProjectTransitions(t *testing.T) {
 	sm := NewProjectStateMachine()
-	p, err := NewProject("Projeto", "desc", FlowSoftware, bson.NewObjectID(), false, nil)
+	p, err := NewProject("Projeto", "desc", FlowSoftware, bson.NewObjectID(), bson.NewObjectID(), false, nil)
 	if err != nil {
 		t.Fatalf("unexpected err: %v", err)
 	}
@@ -26,7 +26,7 @@ func TestProjectStateMachine_ProjectTransitions(t *testing.T) {
 
 func TestProjectStateMachine_InvalidTransition(t *testing.T) {
 	sm := NewProjectStateMachine()
-	p, _ := NewProject("Projeto", "desc", FlowSoftware, bson.NewObjectID(), false, nil)
+	p, _ := NewProject("Projeto", "desc", FlowSoftware, bson.NewObjectID(), bson.NewObjectID(), false, nil)
 
 	if err := sm.TransitionProjectStatus(p, ProjectCompleted, "invalid", "u1"); err == nil {
 		t.Fatal("expected error for invalid transition")
@@ -35,7 +35,7 @@ func TestProjectStateMachine_InvalidTransition(t *testing.T) {
 
 func TestProjectStateMachine_PhaseTransitions(t *testing.T) {
 	sm := NewProjectStateMachine()
-	p, _ := NewProject("Projeto", "desc", FlowSoftware, bson.NewObjectID(), false, nil)
+	p, _ := NewProject("Projeto", "desc", FlowSoftware, bson.NewObjectID(), bson.NewObjectID(), false, nil)
 
 	if err := sm.TransitionPhaseStatus(p, 1, PhaseInProgress, "start", "u1"); err != nil {
 		t.Fatalf("expected phase start, got %v", err)
@@ -53,7 +53,7 @@ func TestProjectStateMachine_PhaseTransitions(t *testing.T) {
 
 func TestProjectStateMachine_TrackTransitions(t *testing.T) {
 	sm := NewProjectStateMachine()
-	p, _ := NewProject("Projeto", "desc", FlowSoftware, bson.NewObjectID(), false, nil)
+	p, _ := NewProject("Projeto", "desc", FlowSoftware, bson.NewObjectID(), bson.NewObjectID(), false, nil)
 
 	if err := sm.TransitionTrackStatus(p, 2, TrackFrontend, PhaseInProgress, "start frontend", "u1"); err != nil {
 		t.Fatalf("expected frontend track start, got %v", err)

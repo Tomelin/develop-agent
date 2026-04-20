@@ -121,6 +121,7 @@ type TransitionRecord struct {
 
 type Project struct {
 	ID                 bson.ObjectID      `bson:"_id,omitempty" json:"id"`
+	OrganizationID     bson.ObjectID      `bson:"organization_id" json:"organization_id"`
 	Name               string             `bson:"name" json:"name"`
 	Description        string             `bson:"description" json:"description"`
 	FlowType           FlowType           `bson:"flow_type" json:"flow_type"`
@@ -161,7 +162,7 @@ type Task struct {
 	UpdatedAt       time.Time      `bson:"updated_at" json:"updated_at"`
 }
 
-func NewProject(name, description string, flowType FlowType, ownerUserID bson.ObjectID, dynamic bool, linkedProjectID *bson.ObjectID) (*Project, error) {
+func NewProject(name, description string, flowType FlowType, ownerUserID, organizationID bson.ObjectID, dynamic bool, linkedProjectID *bson.ObjectID) (*Project, error) {
 	name = strings.TrimSpace(name)
 	if name == "" {
 		return nil, errors.New("name is required")
@@ -173,6 +174,7 @@ func NewProject(name, description string, flowType FlowType, ownerUserID bson.Ob
 	now := time.Now().UTC()
 	return &Project{
 		ID:                 bson.NewObjectID(),
+		OrganizationID:     organizationID,
 		Name:               name,
 		Description:        strings.TrimSpace(description),
 		FlowType:           flowType,

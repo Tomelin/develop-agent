@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.uber.org/zap"
 
@@ -39,7 +40,7 @@ func (s *AdminSeeder) Run(ctx context.Context, forceReset bool) error {
 	if err != nil {
 		return err
 	}
-	admin, err := user.New("Administrator", adminEmail, password, user.RoleAdmin)
+	admin, err := user.New("Administrator", adminEmail, password, user.RoleAdmin, bson.NewObjectID(), user.OrganizationRoleOwner)
 	if err != nil {
 		return err
 	}

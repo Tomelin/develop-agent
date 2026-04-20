@@ -60,7 +60,7 @@ func (n *noopTaskRepo) UpdateStatus(context.Context, string, string, domainproje
 
 func TestStartPhase2RequiresPhase1Completed(t *testing.T) {
 	owner := bson.NewObjectID()
-	p, _ := domainproject.NewProject("P", "", domainproject.FlowSoftware, owner, false, nil)
+	p, _ := domainproject.NewProject("P", "", domainproject.FlowSoftware, owner, owner, false, nil)
 	svc := NewService(&memProjectRepo{project: p}, &noopTaskRepo{})
 
 	if _, err := svc.StartPhase(context.Background(), p.ID.Hex(), owner.Hex(), 2); err == nil {
@@ -70,7 +70,7 @@ func TestStartPhase2RequiresPhase1Completed(t *testing.T) {
 
 func TestSplitTracksApprovalCompletesPhaseOnlyWhenBothApproved(t *testing.T) {
 	owner := bson.NewObjectID()
-	p, _ := domainproject.NewProject("P", "", domainproject.FlowSoftware, owner, false, nil)
+	p, _ := domainproject.NewProject("P", "", domainproject.FlowSoftware, owner, owner, false, nil)
 	p.Phases[0].Status = domainproject.PhaseCompleted // phase 1
 	svc := NewService(&memProjectRepo{project: p}, &noopTaskRepo{})
 
@@ -101,7 +101,7 @@ func TestSplitTracksApprovalCompletesPhaseOnlyWhenBothApproved(t *testing.T) {
 
 func TestPhase3RequiresPhase2CompletedInBothTracks(t *testing.T) {
 	owner := bson.NewObjectID()
-	p, _ := domainproject.NewProject("P", "", domainproject.FlowSoftware, owner, false, nil)
+	p, _ := domainproject.NewProject("P", "", domainproject.FlowSoftware, owner, owner, false, nil)
 	p.Phases[0].Status = domainproject.PhaseCompleted // phase 1
 	svc := NewService(&memProjectRepo{project: p}, &noopTaskRepo{})
 

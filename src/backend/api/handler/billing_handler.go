@@ -132,5 +132,12 @@ func parseFilter(c *gin.Context) (domain.QueryFilter, error) {
 	}
 	page, _ := strconv.ParseInt(c.DefaultQuery("page", "1"), 10, 64)
 	limit, _ := strconv.ParseInt(c.DefaultQuery("limit", "50"), 10, 64)
-	return domain.QueryFilter{UserID: mustUserID(c), From: from, To: to, Page: page, Limit: limit}, nil
+	return domain.QueryFilter{
+		UserID:         mustUserID(c),
+		OrganizationID: mustOrganizationID(c),
+		From:           from,
+		To:             to,
+		Page:           page,
+		Limit:          limit,
+	}, nil
 }

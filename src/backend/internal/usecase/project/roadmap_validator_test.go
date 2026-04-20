@@ -46,7 +46,7 @@ func (m *memTaskRepo) UpdateStatus(context.Context, string, string, domainprojec
 
 func TestApproveRoadmapPhaseIngestsAndCompletesPhase(t *testing.T) {
 	owner := bson.NewObjectID()
-	p, _ := domainproject.NewProject("P", "", domainproject.FlowSoftware, owner, false, nil)
+	p, _ := domainproject.NewProject("P", "", domainproject.FlowSoftware, owner, owner, false, nil)
 	p.Phases[0].Status = domainproject.PhaseCompleted
 	p.Phases[3].Status = domainproject.PhaseInProgress
 

@@ -53,7 +53,7 @@ func (m *memCodeFileRepo) IncrementAutoRejections(context.Context, string) error
 
 func TestSetExecutionMode(t *testing.T) {
 	owner := bson.NewObjectID()
-	p, _ := domainproject.NewProject("P", "", domainproject.FlowSoftware, owner, false, nil)
+	p, _ := domainproject.NewProject("P", "", domainproject.FlowSoftware, owner, owner, false, nil)
 	svc := NewDevelopmentService(&memProjectRepo{project: p}, &noopTaskRepo{}, &memCodeFileRepo{})
 
 	mode, err := svc.SetExecutionMode(context.Background(), p.ID.Hex(), owner.Hex(), domainproject.ExecutionModeAutomatic)
@@ -67,7 +67,7 @@ func TestSetExecutionMode(t *testing.T) {
 
 func TestExecuteTaskGeneratesAndCompletes(t *testing.T) {
 	owner := bson.NewObjectID()
-	p, _ := domainproject.NewProject("P", "", domainproject.FlowSoftware, owner, false, nil)
+	p, _ := domainproject.NewProject("P", "", domainproject.FlowSoftware, owner, owner, false, nil)
 	taskID := bson.NewObjectID()
 	taskRepo := &inMemoryTaskRepo{items: []*domainproject.Task{{
 		ID:         taskID,

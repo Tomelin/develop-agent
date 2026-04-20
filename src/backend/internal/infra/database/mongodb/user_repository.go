@@ -25,6 +25,7 @@ func (r *UserRepository) EnsureIndexes(ctx context.Context) error {
 	_, err := r.col.Indexes().CreateMany(ctx, []mongo.IndexModel{
 		{Keys: bson.D{{Key: "email", Value: 1}}, Options: options.Index().SetUnique(true)},
 		{Keys: bson.D{{Key: "role", Value: 1}}},
+		{Keys: bson.D{{Key: "organization_id", Value: 1}, {Key: "organization_role", Value: 1}}},
 	})
 	return err
 }
@@ -60,13 +61,15 @@ func (r *UserRepository) Update(ctx context.Context, u *user.User) error {
 	u.UpdatedAt = time.Now().UTC()
 	filter := bson.M{"_id": u.ID, "deleted_at": bson.M{"$exists": false}}
 	update := bson.M{"$set": bson.M{
-		"name":          u.Name,
-		"email":         u.Email,
-		"password_hash": u.PasswordHash,
-		"role":          u.Role,
-		"prompts":       u.Prompts,
-		"enabled":       u.Enabled,
-		"updated_at":    u.UpdatedAt,
+		"organization_id":   u.OrganizationID,
+		"organization_role": u.OrganizationRole,
+		"name":              u.Name,
+		"email":             u.Email,
+		"password_hash":     u.PasswordHash,
+		"role":              u.Role,
+		"prompts":           u.Prompts,
+		"enabled":           u.Enabled,
+		"updated_at":        u.UpdatedAt,
 	}}
 	res, err := r.col.UpdateOne(ctx, filter, update)
 	if err != nil {

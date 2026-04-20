@@ -3,11 +3,12 @@ package project
 import "context"
 
 type ProjectListFilter struct {
-	OwnerID  string
-	Status   ProjectStatus
-	FlowType FlowType
-	Page     int64
-	Limit    int64
+	OwnerID        string
+	OrganizationID string
+	Status         ProjectStatus
+	FlowType       FlowType
+	Page           int64
+	Limit          int64
 }
 
 type ProjectRepository interface {

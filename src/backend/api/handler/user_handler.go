@@ -90,7 +90,7 @@ func (h *UserHandler) UpdatePassword(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid current password"})
 		return
 	}
-	updated, err := user.New(u.Name, u.Email, req.NewPassword, u.Role)
+	updated, err := user.New(u.Name, u.Email, req.NewPassword, u.Role, u.OrganizationID, u.OrganizationRole)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

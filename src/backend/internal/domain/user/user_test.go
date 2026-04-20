@@ -1,6 +1,10 @@
 package user
 
-import "testing"
+import (
+	"testing"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+)
 
 func TestValidateEmail(t *testing.T) {
 	if err := ValidateEmail("invalid"); err == nil {
@@ -21,7 +25,7 @@ func TestValidatePassword(t *testing.T) {
 }
 
 func TestNewAndCheckPassword(t *testing.T) {
-	u, err := New("John", "john@doe.com", "supersecret", RoleUser)
+	u, err := New("John", "john@doe.com", "supersecret", RoleUser, bson.NewObjectID(), OrganizationRoleMember)
 	if err != nil {
 		t.Fatalf("unexpected new user error: %v", err)
 	}

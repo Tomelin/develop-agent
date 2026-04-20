@@ -22,9 +22,9 @@ func NewProjectRepository(adapter *Adapter, dbName string) *ProjectRepository {
 
 func (r *ProjectRepository) EnsureIndexes(ctx context.Context) error {
 	_, err := r.col.Indexes().CreateMany(ctx, []mongo.IndexModel{
-		{Keys: bson.D{{Key: "owner_user_id", Value: 1}, {Key: "status", Value: 1}}},
+		{Keys: bson.D{{Key: "organization_id", Value: 1}, {Key: "owner_user_id", Value: 1}, {Key: "status", Value: 1}}},
 		{Keys: bson.D{{Key: "status", Value: 1}, {Key: "created_at", Value: -1}}},
-		{Keys: bson.D{{Key: "owner_user_id", Value: 1}, {Key: "name", Value: 1}}, Options: options.Index().SetUnique(true)},
+		{Keys: bson.D{{Key: "organization_id", Value: 1}, {Key: "owner_user_id", Value: 1}, {Key: "name", Value: 1}}, Options: options.Index().SetUnique(true)},
 	})
 	return err
 }
@@ -167,7 +167,11 @@ func buildProjectFilter(filter project.ProjectListFilter, dashboard bool) (bson.
 	if err != nil {
 		return nil, nil, err
 	}
-	query := bson.M{"owner_user_id": ownerID}
+	orgID, err := bson.ObjectIDFromHex(filter.OrganizationID)
+	if err != nil {
+		return nil, nil, err
+	}
+	query := bson.M{"owner_user_id": ownerID, "organization_id": orgID}
 	if filter.Status != "" {
 		query["status"] = filter.Status
 	}

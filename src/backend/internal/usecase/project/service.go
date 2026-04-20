@@ -28,6 +28,7 @@ type CreateProjectInput struct {
 	Description        string
 	FlowType           domain.FlowType
 	OwnerUserID        string
+	OrganizationID     string
 	LinkedProjectID    string
 	DynamicModeEnabled bool
 }
@@ -51,6 +52,10 @@ func (s *Service) CreateProject(ctx context.Context, in CreateProjectInput) (*do
 	if err != nil {
 		return nil, errors.New("invalid owner user id")
 	}
+	organizationID, err := bson.ObjectIDFromHex(in.OrganizationID)
+	if err != nil {
+		return nil, errors.New("invalid organization id")
+	}
 
 	var linkedID *bson.ObjectID
 	if strings.TrimSpace(in.LinkedProjectID) != "" {
@@ -61,7 +66,7 @@ func (s *Service) CreateProject(ctx context.Context, in CreateProjectInput) (*do
 		linkedID = &lid
 	}
 
-	p, err := domain.NewProject(in.Name, in.Description, in.FlowType, ownerID, in.DynamicModeEnabled, linkedID)
+	p, err := domain.NewProject(in.Name, in.Description, in.FlowType, ownerID, organizationID, in.DynamicModeEnabled, linkedID)
 	if err != nil {
 		return nil, err
 	}

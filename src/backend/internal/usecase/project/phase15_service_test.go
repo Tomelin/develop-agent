@@ -14,7 +14,7 @@ import (
 
 func TestPhase15RunWithManualBrief(t *testing.T) {
 	owner := bson.NewObjectID()
-	p, _ := domainproject.NewProject("Marketing", "", domainproject.FlowMarketing, owner, false, nil)
+	p, _ := domainproject.NewProject("Marketing", "", domainproject.FlowMarketing, owner, owner, false, nil)
 	repo := &memProjectRepo{project: p}
 	files := &memCodeFileRepo{}
 	svc := NewPhase15Service(repo, files)
@@ -44,7 +44,7 @@ func TestPhase15RunWithManualBrief(t *testing.T) {
 
 func TestPhase15ExportPackFilteredByChannel(t *testing.T) {
 	owner := bson.NewObjectID()
-	p, _ := domainproject.NewProject("Marketing", "", domainproject.FlowMarketing, owner, false, nil)
+	p, _ := domainproject.NewProject("Marketing", "", domainproject.FlowMarketing, owner, owner, false, nil)
 	repo := &memProjectRepo{project: p}
 	files := &memCodeFileRepo{}
 	svc := NewPhase15Service(repo, files)
@@ -72,7 +72,7 @@ func TestPhase15ExportPackFilteredByChannel(t *testing.T) {
 
 func TestPhase15ConfigureWebhook(t *testing.T) {
 	owner := bson.NewObjectID()
-	p, _ := domainproject.NewProject("Marketing", "", domainproject.FlowMarketing, owner, false, nil)
+	p, _ := domainproject.NewProject("Marketing", "", domainproject.FlowMarketing, owner, owner, false, nil)
 	repo := &memProjectRepo{project: p}
 	files := &memCodeFileRepo{}
 	svc := NewPhase15Service(repo, files)
