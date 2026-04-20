@@ -129,6 +129,8 @@ func main() {
 	phase13Handler := handler.NewPhase13Handler(projectRepo, phase13Service)
 	phase14Service := usecaseproject.NewPhase14Service(projectRepo, codeFileRepo)
 	phase14Handler := handler.NewPhase14Handler(projectRepo, phase14Service)
+	phase15Service := usecaseproject.NewPhase15Service(projectRepo, codeFileRepo)
+	phase15Handler := handler.NewPhase15Handler(projectRepo, phase15Service)
 	promptHandler := handler.NewPromptHandler(promptRepo, usecaseprompt.NewService(promptRepo))
 	interviewService := usecaseinterview.NewService(interviewRepo, projectRepo, mock.New(), nil)
 	interviewHandler := handler.NewInterviewHandler(interviewService)
@@ -150,6 +152,7 @@ func main() {
 		phase7Handler.Register(private)
 		phase13Handler.Register(private)
 		phase14Handler.Register(private)
+		phase15Handler.Register(private)
 		promptHandler.Register(private)
 		interviewHandler.Register(private)
 	}
