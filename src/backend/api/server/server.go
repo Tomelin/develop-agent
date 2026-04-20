@@ -11,6 +11,7 @@ import (
 
 	"github.com/develop-agent/backend/config"
 	"github.com/develop-agent/backend/pkg/logger"
+	"github.com/develop-agent/backend/pkg/observability"
 )
 
 type Server struct {
@@ -29,6 +30,7 @@ func New(cfg *config.Config) *Server {
 	// Middlewares
 	r.Use(gin.Recovery())
 	r.Use(RequestIDMiddleware())
+	r.Use(observability.HTTPMiddleware())
 	r.Use(LoggerMiddleware())
 	r.Use(CORSMiddleware())
 
