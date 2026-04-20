@@ -46,6 +46,26 @@ func (r *ProjectRepository) FindByID(ctx context.Context, id string) (*project.P
 	return &out, nil
 }
 
+func (r *ProjectRepository) FindByIDScoped(ctx context.Context, id, ownerID, organizationID string) (*project.Project, error) {
+	pid, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+	oid, err := bson.ObjectIDFromHex(ownerID)
+	if err != nil {
+		return nil, err
+	}
+	orgID, err := bson.ObjectIDFromHex(organizationID)
+	if err != nil {
+		return nil, err
+	}
+	var out project.Project
+	if err := r.col.FindOne(ctx, bson.M{"_id": pid, "owner_user_id": oid, "organization_id": orgID}).Decode(&out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 func (r *ProjectRepository) FindByOwner(ctx context.Context, filter project.ProjectListFilter) ([]*project.Project, int64, error) {
 	query, opts, err := buildProjectFilter(filter, false)
 	if err != nil {
