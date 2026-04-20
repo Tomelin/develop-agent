@@ -22,6 +22,8 @@ type TaskComplexity string
 
 type TaskStatus string
 
+type ExecutionMode string
+
 const (
 	FlowSoftware    FlowType = "SOFTWARE"
 	FlowLandingPage FlowType = "LANDING_PAGE"
@@ -70,6 +72,11 @@ const (
 	TaskInProgress TaskStatus = "IN_PROGRESS"
 	TaskDone       TaskStatus = "DONE"
 	TaskBlocked    TaskStatus = "BLOCKED"
+)
+
+const (
+	ExecutionModeAutomatic ExecutionMode = "AUTOMATIC"
+	ExecutionModeManual    ExecutionMode = "MANUAL"
 )
 
 type AgentTriad struct {
@@ -128,6 +135,7 @@ type Project struct {
 	TotalTokensUsed    int64              `bson:"total_tokens_used" json:"total_tokens_used"`
 	TotalCostUSD       float64            `bson:"total_cost_usd" json:"total_cost_usd"`
 	TransitionHistory  []TransitionRecord `bson:"transition_history,omitempty" json:"transition_history,omitempty"`
+	Phase5Mode         ExecutionMode      `bson:"phase_5_mode,omitempty" json:"phase_5_mode,omitempty"`
 	CreatedAt          time.Time          `bson:"created_at" json:"created_at"`
 	UpdatedAt          time.Time          `bson:"updated_at" json:"updated_at"`
 	ArchivedAt         *time.Time         `bson:"archived_at,omitempty" json:"archived_at,omitempty"`
@@ -172,6 +180,7 @@ func NewProject(name, description string, flowType FlowType, ownerUserID bson.Ob
 		LinkedProjectID:    linkedProjectID,
 		OwnerUserID:        ownerUserID,
 		DynamicModeEnabled: dynamic,
+		Phase5Mode:         ExecutionModeManual,
 		TotalTokensUsed:    0,
 		TotalCostUSD:       0,
 		CreatedAt:          now,
@@ -248,6 +257,15 @@ func (c TaskComplexity) IsValid() bool {
 func (s TaskStatus) IsValid() bool {
 	switch s {
 	case TaskTodo, TaskInProgress, TaskDone, TaskBlocked:
+		return true
+	default:
+		return false
+	}
+}
+
+func (m ExecutionMode) IsValid() bool {
+	switch m {
+	case ExecutionModeAutomatic, ExecutionModeManual:
 		return true
 	default:
 		return false
