@@ -3,3 +3,8 @@ services:
     # Any local specific overrides here
     environment:
       - APP_DEBUG=true
+
+  frontend:
+    environment:
+      - NODE_ENV=development
+      - WATCHPACK_POLLING=true
