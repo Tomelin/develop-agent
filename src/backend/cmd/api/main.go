@@ -81,6 +81,10 @@ func main() {
 	if err := taskRepo.EnsureIndexes(context.Background()); err != nil {
 		logger.Global().Fatal("Failed to ensure Task Mongo indexes", zap.Error(err))
 	}
+	codeFileRepo := mongodb.NewCodeFileRepository(mongoClient, cfg.Mongo.DBName)
+	if err := codeFileRepo.EnsureIndexes(context.Background()); err != nil {
+		logger.Global().Fatal("Failed to ensure CodeFile Mongo indexes", zap.Error(err))
+	}
 	promptRepo := mongodb.NewUserPromptRepository(mongoClient, cfg.Mongo.DBName)
 	if err := promptRepo.EnsureIndexes(context.Background()); err != nil {
 		logger.Global().Fatal("Failed to ensure Prompt Mongo indexes", zap.Error(err))
@@ -110,11 +114,13 @@ func main() {
 
 	authService := usecaseauth.NewService(userRepo, tokenManager, pkgauth.NewRedisRefreshStore(redisClient))
 	projectService := usecaseproject.NewService(projectRepo, taskRepo)
+	developmentService := usecaseproject.NewDevelopmentService(projectRepo, taskRepo, codeFileRepo)
 	authHandler := handler.NewAuthHandler(authService)
 	userHandler := handler.NewUserHandler(userRepo)
 	agentHandler := handler.NewAgentHandler(agentRepo)
 	projectHandler := handler.NewProjectHandler(projectRepo, projectService)
 	taskHandler := handler.NewTaskHandler(taskRepo, projectRepo)
+	phase5Handler := handler.NewPhase5Handler(projectRepo, developmentService)
 	promptHandler := handler.NewPromptHandler(promptRepo, usecaseprompt.NewService(promptRepo))
 	interviewService := usecaseinterview.NewService(interviewRepo, projectRepo, mock.New(), nil)
 	interviewHandler := handler.NewInterviewHandler(interviewService)
@@ -131,6 +137,7 @@ func main() {
 		agentHandler.Register(private)
 		projectHandler.Register(private)
 		taskHandler.Register(private)
+		phase5Handler.Register(private)
 		promptHandler.Register(private)
 		interviewHandler.Register(private)
 	}
@@ -160,5 +167,6 @@ var _ user.Repository = (*mongodb.UserRepository)(nil)
 var _ agent.Repository = (*mongodb.AgentRepository)(nil)
 var _ project.ProjectRepository = (*mongodb.ProjectRepository)(nil)
 var _ project.TaskRepository = (*mongodb.TaskRepository)(nil)
+var _ project.CodeFileRepository = (*mongodb.CodeFileRepository)(nil)
 var _ prompt.UserPromptRepository = (*mongodb.UserPromptRepository)(nil)
 var _ interview.Repository = (*mongodb.InterviewRepository)(nil)

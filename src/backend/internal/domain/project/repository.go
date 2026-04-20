@@ -36,3 +36,12 @@ type TaskRepository interface {
 	RoadmapSummary(ctx context.Context, projectID string) (*RoadmapSummary, error)
 	UpdateStatus(ctx context.Context, projectID, taskID string, status TaskStatus) error
 }
+
+type CodeFileRepository interface {
+	EnsureIndexes(ctx context.Context) error
+	Upsert(ctx context.Context, file *CodeFile) error
+	ListByProject(ctx context.Context, projectID string) ([]*CodeFile, error)
+	FindByID(ctx context.Context, projectID, fileID string) (*CodeFile, error)
+	CountAutoRejections(ctx context.Context, projectID string) (int64, error)
+	IncrementAutoRejections(ctx context.Context, projectID string) error
+}
