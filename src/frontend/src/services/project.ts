@@ -1,6 +1,6 @@
 import { api } from "./api";
 import { Project, ProjectListResponse, ProjectCreateRequest, ProjectStatus, FlowType } from "../types/project";
-import { Task, TaskListResponse, TaskStatus } from "../types/task";
+import { TaskListResponse, TaskStatus } from "../types/task";
 import { Phase6AnalyzeCoverageResponse, Phase6ValidationResult } from "../types/phase6";
 import { Phase5CodeContext, Phase5CodeFile, Phase5ExecutionMode, Phase5FileListResponse, Phase5Summary } from "../types/phase5";
 
@@ -8,7 +8,7 @@ export const ProjectService = {
   getProjects: async (page = 1, size = 10, status?: ProjectStatus, flow_type?: FlowType): Promise<ProjectListResponse> => {
     const params = new URLSearchParams({
       page: page.toString(),
-      size: size.toString(),
+      limit: size.toString(),
     });
     if (status) params.append("status", status);
     if (flow_type) params.append("flow_type", flow_type);
@@ -47,15 +47,14 @@ export const ProjectService = {
   getTasks: async (projectId: string, page = 1, size = 10): Promise<TaskListResponse> => {
     const params = new URLSearchParams({
       page: page.toString(),
-      size: size.toString(),
+      limit: size.toString(),
     });
     const response = await api.get(`/projects/${projectId}/tasks`, { params });
     return response.data;
   },
 
-  updateTaskStatus: async (projectId: string, taskId: string, status: TaskStatus): Promise<Task> => {
-    const response = await api.put(`/projects/${projectId}/tasks/${taskId}/status`, { status });
-    return response.data;
+  updateTaskStatus: async (projectId: string, taskId: string, status: TaskStatus): Promise<void> => {
+    await api.put(`/projects/${projectId}/tasks/${taskId}/status`, { status });
   },
 
   analyzePhase6Coverage: async (projectId: string, payload: { backend_dir: string; threshold?: number }): Promise<Phase6AnalyzeCoverageResponse> => {
