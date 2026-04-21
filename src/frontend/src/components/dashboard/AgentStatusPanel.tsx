@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Activity, ServerCrash, Bot, CheckCircle2, PauseCircle, Clock } from "lucide-react";
 import { AgentService } from "@/services/agent";
 import { Agent, AgentStatus } from "@/types/agent";
-import { api } from "@/services/api";
 
 export function AgentStatusPanel() {
   const [agents, setAgents] = useState<Agent[]>([]);
