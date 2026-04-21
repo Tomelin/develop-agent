@@ -3,7 +3,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { PrivateRoute } from "@/components/auth/PrivateRoute";
 import Link from "next/link";
-import { LayoutDashboard, User as UserIcon, LogOut, Bot } from "lucide-react";
+import { LayoutDashboard, User as UserIcon, LogOut, Bot, WandSparkles } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,6 +48,13 @@ export default function DashboardLayout({
                 >
                   <Bot className="mr-2 h-4 w-4" />
                   Agentes
+                </Link>
+                <Link
+                  href="/prompts"
+                  className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <WandSparkles className="mr-2 h-4 w-4" />
+                  Prompts
                 </Link>
               </nav>
             </div>
