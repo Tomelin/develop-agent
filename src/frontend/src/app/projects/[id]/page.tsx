@@ -33,6 +33,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
   const router = useRouter();
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("timeline");
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -110,6 +111,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
 
   // Mocking phase definitions based on flow type for the timeline UI
   const totalPhases = project.flow_type === "A" ? 8 : project.flow_type === "B" ? 5 : 6;
+  const tokensUsed = Number(project.tokens_used ?? 0);
   const phases = Array.from({ length: totalPhases }).map((_, i) => ({
     id: i + 1,
     name: `Fase ${i + 1}`,
@@ -177,7 +179,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
           </div>
         </div>
 
-        <Tabs defaultValue="timeline" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="bg-card/50 border border-border p-1">
             <TabsTrigger value="timeline">Timeline do Projeto</TabsTrigger>
             <TabsTrigger value="kanban">Roadmap</TabsTrigger>
@@ -233,7 +235,11 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
 
                             {phase.id === project.current_phase && (
                               <div className="mt-4 pt-4 border-t border-primary/20">
-                                <Button size="sm" className="w-full gap-2">
+                                <Button
+                                  size="sm"
+                                  className="w-full gap-2"
+                                  onClick={() => setActiveTab("agent-config")}
+                                >
                                   <Sparkles className="h-4 w-4" /> Acompanhar Agentes
                                 </Button>
                               </div>
@@ -259,11 +265,11 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                     <div className="space-y-4">
                       <div className="flex justify-between items-center pb-4 border-b border-border/50">
                         <span className="text-sm text-muted-foreground">Tokens Utilizados</span>
-                        <span className="font-mono font-medium">{project.tokens_used.toLocaleString()}</span>
+                        <span className="font-mono font-medium">{tokensUsed.toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">Custo Estimado</span>
-                        <span className="font-mono font-medium text-destructive">~${((project.tokens_used / 1000) * 0.01).toFixed(2)}</span>
+                        <span className="font-mono font-medium text-destructive">~${((tokensUsed / 1000) * 0.01).toFixed(2)}</span>
                       </div>
                     </div>
                   </CardContent>

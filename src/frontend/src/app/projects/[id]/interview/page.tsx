@@ -191,8 +191,8 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">Chat da Entrevista</CardTitle>
                 <Sheet>
-                  <SheetTrigger >
-                    <Button variant="outline" size="sm">Pré-visualizar VISION.md</Button>
+                  <SheetTrigger render={<Button variant="outline" size="sm" />}>
+                    Pré-visualizar VISION.md
                   </SheetTrigger>
                   <SheetContent className="w-full overflow-y-auto border-border/80 bg-card sm:max-w-3xl">
                     <SheetHeader>
