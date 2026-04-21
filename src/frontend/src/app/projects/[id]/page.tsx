@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import { KanbanBoard } from "@/components/projects/KanbanBoard";
 import { Phase6ExecutionPanel } from "@/components/projects/Phase6ExecutionPanel";
+import { Phase8Workspace } from "@/components/projects/phase8/Phase8Workspace";
 
 export default function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -170,6 +171,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
             <TabsTrigger value="timeline">Timeline do Projeto</TabsTrigger>
             <TabsTrigger value="kanban">Kanban de Tasks</TabsTrigger>
             <TabsTrigger value="phase6">Fase 06</TabsTrigger>
+            <TabsTrigger value="phase8">Fase 08</TabsTrigger>
             <TabsTrigger value="settings">Configurações</TabsTrigger>
           </TabsList>
 
@@ -282,6 +284,12 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
 
           <TabsContent value="phase6" className="mt-6">
             <Phase6ExecutionPanel projectId={project.id} />
+          </TabsContent>
+
+
+
+          <TabsContent value="phase8" className="mt-6">
+            <Phase8Workspace projectId={project.id} phaseNumber={2} />
           </TabsContent>
 
           <TabsContent value="settings" className="mt-6">

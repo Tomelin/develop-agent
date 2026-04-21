@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { NotificationBell } from "@/components/dashboard/NotificationBell";
 
 export default function DashboardLayout({
   children,
@@ -59,7 +60,8 @@ export default function DashboardLayout({
               </nav>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <NotificationBell />
               <DropdownMenu>
                 <DropdownMenuTrigger>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
