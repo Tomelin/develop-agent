@@ -16,6 +16,7 @@ import { Progress } from "@/components/ui/progress";
 
 import { Phase6ExecutionPanel } from "@/components/projects/Phase6ExecutionPanel";
 import { Phase8Workspace } from "@/components/projects/phase8/Phase8Workspace";
+import { Phase5DevelopmentCenter } from "@/components/projects/phase5/Phase5DevelopmentCenter";
 
 export default function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -170,6 +171,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
           <TabsList className="bg-card/50 border border-border p-1">
             <TabsTrigger value="timeline">Timeline do Projeto</TabsTrigger>
             <TabsTrigger value="kanban">Roadmap</TabsTrigger>
+            <TabsTrigger value="phase5">Fase 05</TabsTrigger>
             <TabsTrigger value="phase6">Fase 06</TabsTrigger>
             <TabsTrigger value="phase8">Fase 08</TabsTrigger>
             <TabsTrigger value="settings">Configurações</TabsTrigger>
@@ -295,6 +297,10 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
 
           </TabsContent>
 
+
+          <TabsContent value="phase5" className="mt-6">
+            <Phase5DevelopmentCenter projectId={project.id} />
+          </TabsContent>
 
           <TabsContent value="phase6" className="mt-6">
             <Phase6ExecutionPanel projectId={project.id} />
