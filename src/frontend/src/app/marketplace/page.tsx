@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ export default function MarketplacePage() {
   const [category, setCategory] = useState("ALL");
   const [group, setGroup] = useState("ALL");
 
-  const loadTemplates = async () => {
+  const loadTemplates = useCallback(async () => {
     try {
       const response = await Phase20Service.listPublicTemplates({
         search: search || undefined,
@@ -30,14 +30,14 @@ export default function MarketplacePage() {
       console.error(error);
       toast.error("Não foi possível carregar o marketplace.");
     }
-  };
+  }, [category, group, search]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       void loadTemplates();
     }, 0);
     return () => clearTimeout(timer);
-  }, [category, group]);
+  }, [loadTemplates]);
 
   const categories = useMemo(() => Array.from(new Set(templates.map((item) => item.category))), [templates]);
   const groups = useMemo(() => Array.from(new Set(templates.map((item) => item.group))), [templates]);
@@ -46,7 +46,7 @@ export default function MarketplacePage() {
     try {
       await Phase20Service.activateTemplate(templateId);
       toast.success("Template adicionado à sua base de prompts.");
-      loadTemplates();
+      await loadTemplates();
     } catch (error) {
       console.error(error);
       toast.error("Falha ao usar template.");
@@ -57,7 +57,7 @@ export default function MarketplacePage() {
     try {
       await Phase20Service.starTemplate(templateId);
       toast.success("Template favoritado.");
-      loadTemplates();
+      await loadTemplates();
     } catch (error) {
       console.error(error);
       toast.error("Falha ao favoritar template.");
@@ -76,14 +76,14 @@ export default function MarketplacePage() {
           <Search className="h-4 w-4 text-muted-foreground absolute left-3 top-3" />
           <Input className="pl-9" placeholder="Buscar por título, tag ou descrição..." value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
-        <Select value={category} onValueChange={setCategory}>
+        <Select value={category} onValueChange={(value) => setCategory(value ?? "ALL")}>
           <SelectTrigger><SelectValue placeholder="Categoria" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">Todas categorias</SelectItem>
             {categories.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Select value={group} onValueChange={setGroup}>
+        <Select value={group} onValueChange={(value) => setGroup(value ?? "ALL")}>
           <SelectTrigger><SelectValue placeholder="Fase alvo" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">Todas as fases</SelectItem>
@@ -115,9 +115,7 @@ export default function MarketplacePage() {
               </div>
               <div className="flex flex-wrap gap-2">
                 <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="outline">Preview</Button>
-                  </DialogTrigger>
+                  <DialogTrigger render={<Button variant="outline" />}>Preview</DialogTrigger>
                   <DialogContent className="max-w-2xl">
                     <DialogHeader>
                       <DialogTitle>{template.title}</DialogTitle>

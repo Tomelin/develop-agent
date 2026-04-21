@@ -166,9 +166,14 @@ export default function StatusPage() {
   }, []);
 
   useEffect(() => {
-    fetchStatus();
+    const initialFetchTimer = setTimeout(() => {
+      void fetchStatus();
+    }, 0);
     const interval = setInterval(() => fetchStatus(true), POLLING_INTERVAL_MS);
-    return () => clearInterval(interval);
+    return () => {
+      clearTimeout(initialFetchTimer);
+      clearInterval(interval);
+    };
   }, [fetchStatus]);
 
   const overview = useMemo(() => {

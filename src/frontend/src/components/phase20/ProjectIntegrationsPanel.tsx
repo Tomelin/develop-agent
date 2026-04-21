@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Phase20Service } from "@/services/phase20";
 import { IntegrationConnectionState } from "@/types/phase20";
-import { CheckCircle2, Github, RefreshCcw, Slack } from "lucide-react";
+import { CheckCircle2, GitBranch, MessageSquare, RefreshCcw } from "lucide-react";
 
 export function ProjectIntegrationsPanel({ projectId }: { projectId: string }) {
   const [items, setItems] = useState<IntegrationConnectionState[]>([]);
@@ -18,7 +18,7 @@ export function ProjectIntegrationsPanel({ projectId }: { projectId: string }) {
   const [slackWebhookUrl, setSlackWebhookUrl] = useState("");
   const [slackChannel, setSlackChannel] = useState("#general");
 
-  const loadIntegrations = async () => {
+  const loadIntegrations = useCallback(async () => {
     try {
       const data = await Phase20Service.getIntegrationsStatus(projectId);
       setItems(data);
@@ -26,14 +26,14 @@ export function ProjectIntegrationsPanel({ projectId }: { projectId: string }) {
       console.error(error);
       toast.error("Falha ao carregar status de integrações.");
     }
-  };
+  }, [projectId]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       void loadIntegrations();
     }, 0);
     return () => clearTimeout(timer);
-  }, [projectId]);
+  }, [loadIntegrations]);
 
   const connectGithub = async () => {
     try {
@@ -94,7 +94,7 @@ export function ProjectIntegrationsPanel({ projectId }: { projectId: string }) {
       <CardContent className="space-y-4">
         <div className="rounded-xl border p-4">
           <div className="mb-2 flex items-center justify-between">
-            <p className="font-medium flex items-center gap-2"><Github className="h-4 w-4" /> GitHub OAuth</p>
+            <p className="font-medium flex items-center gap-2"><GitBranch className="h-4 w-4" /> GitHub OAuth</p>
             {integrationState("github") && <span className="text-xs text-green-500 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Conectado</span>}
           </div>
           <Button onClick={connectGithub}>Conectar com GitHub</Button>
@@ -115,7 +115,7 @@ export function ProjectIntegrationsPanel({ projectId }: { projectId: string }) {
         </div>
 
         <div className="rounded-xl border p-4 space-y-2">
-          <p className="font-medium flex items-center gap-2"><Slack className="h-4 w-4" /> Slack Webhook</p>
+          <p className="font-medium flex items-center gap-2"><MessageSquare className="h-4 w-4" /> Slack Webhook</p>
           <div className="grid gap-2 md:grid-cols-2">
             <Input placeholder="https://hooks.slack.com/services/..." value={slackWebhookUrl} onChange={(e) => setSlackWebhookUrl(e.target.value)} />
             <Input placeholder="#canal-alertas" value={slackChannel} onChange={(e) => setSlackChannel(e.target.value)} />

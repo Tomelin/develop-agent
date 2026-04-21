@@ -31,7 +31,8 @@ export default function AdminRoadmapPage() {
     return () => clearTimeout(timer);
   }, []);
 
-  const updateStatus = async (featureId: string, status: string) => {
+  const updateStatus = async (featureId: string, status: string | null) => {
+    if (!status) return;
     try {
       await Phase20Service.updateRoadmapFeatureStatus(featureId, status);
       setRoadmap((current) => current ? {
