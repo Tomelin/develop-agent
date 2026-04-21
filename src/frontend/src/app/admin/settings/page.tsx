@@ -26,7 +26,7 @@ export default function AdminSettingsPage() {
               <p className="text-sm text-muted-foreground">
                 Acompanhe os indicadores operacionais da PHASE-19 em um dashboard dedicado de qualidade.
               </p>
-              <Link href="/admin/quality-report">
+              <Link href="/dashboard/admin/quality-report">
                 <Button variant="secondary" className="w-fit gap-2">
                   <BarChart3 className="h-4 w-4" /> Ver relatório de qualidade
                 </Button>
