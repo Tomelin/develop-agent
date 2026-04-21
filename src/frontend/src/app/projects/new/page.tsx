@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import Link from "next/link";
 
 const projectSchema = z.object({
-  flow_type: z.enum(["A", "B", "C"], { invalid_type_error: "Selecione o tipo de fluxo", required_error: "Selecione o tipo de fluxo" } as any),
+  flow_type: z.enum(["A", "B", "C"]),
   name: z.string().min(3, "O nome deve ter no mínimo 3 caracteres").max(100),
   description: z.string().min(10, "Forneça uma descrição detalhada (mínimo 10 caracteres)"),
   dynamic_mode: z.boolean(),

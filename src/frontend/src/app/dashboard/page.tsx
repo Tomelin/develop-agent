@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Sparkles, Activity, Plus, Search, FolderKanban, Clock, Bot } from "lucide-react";
 import { AgentStatusPanel } from "@/components/dashboard/AgentStatusPanel";
 import { useEffect, useState } from "react";
@@ -13,6 +13,15 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
+
+const PROJECT_STATUS_VALUES: Array<ProjectStatus | "ALL"> = ["ALL", "DRAFT", "IN_PROGRESS", "PAUSED", "COMPLETED", "ARCHIVED"];
+const FLOW_TYPE_VALUES: Array<FlowType | "ALL"> = ["ALL", "A", "B", "C"];
+
+const isProjectStatusFilter = (value: string): value is ProjectStatus | "ALL" =>
+  PROJECT_STATUS_VALUES.includes(value as ProjectStatus | "ALL");
+
+const isFlowTypeFilter = (value: string): value is FlowType | "ALL" =>
+  FLOW_TYPE_VALUES.includes(value as FlowType | "ALL");
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -148,7 +157,7 @@ export default function DashboardPage() {
               />
             </div>
             <div className="flex w-full sm:w-auto gap-2">
-              <Select value={statusFilter} onValueChange={(v: string | null) => v && setStatusFilter(v as any)}>
+              <Select value={statusFilter} onValueChange={(v: string) => isProjectStatusFilter(v) && setStatusFilter(v)}>
                 <SelectTrigger className="w-[140px] bg-background">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
@@ -160,7 +169,7 @@ export default function DashboardPage() {
                   <SelectItem value="COMPLETED">Concluído</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={flowFilter} onValueChange={(v: string | null) => v && setFlowFilter(v as any)}>
+              <Select value={flowFilter} onValueChange={(v: string) => isFlowTypeFilter(v) && setFlowFilter(v)}>
                 <SelectTrigger className="w-[140px] bg-background">
                   <SelectValue placeholder="Fluxo" />
                 </SelectTrigger>
