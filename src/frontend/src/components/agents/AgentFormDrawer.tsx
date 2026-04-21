@@ -347,6 +347,50 @@ export function AgentFormDrawer({
 
                 <FormField
                   control={form.control}
+                  name="api_key_ref"
+                  render={({ field }) => (
+                    <FormItem className="col-span-2">
+                      <FormLabel>Chave de API (Secret / API Key)</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="sk-api-key..."
+                          type="password"
+                          {...field}
+                          value={field.value ?? ""}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        A chave de API para autenticação junto ao provedor de IA (OpenAI, Anthropic, etc).
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="api_key_ref"
+                  render={({ field }) => (
+                    <FormItem className="col-span-2">
+                      <FormLabel>Chave de API (Secret / API Key)</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="sk-api-key..."
+                          type="password"
+                          {...field}
+                          value={field.value ?? ""}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        A chave de API para autenticação junto ao provedor de IA (OpenAI, Anthropic, etc).
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
                   name="enabled"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm col-span-2">
