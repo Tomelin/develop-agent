@@ -8,7 +8,25 @@ export const AgentService = {
       size: size.toString(),
     });
     const response = await api.get("/agents", { params });
-    return response.data;
+    const payload = response.data;
+
+    if (Array.isArray(payload)) {
+      return {
+        items: payload,
+        total: payload.length,
+        page,
+        size,
+        pages: 1,
+      };
+    }
+
+    return {
+      items: payload?.items ?? [],
+      total: payload?.total ?? payload?.items?.length ?? 0,
+      page: payload?.page ?? page,
+      size: payload?.size ?? size,
+      pages: payload?.pages ?? 1,
+    };
   },
 
   getAgentById: async (id: string): Promise<Agent> => {
