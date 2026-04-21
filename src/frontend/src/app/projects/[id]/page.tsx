@@ -33,6 +33,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
   const router = useRouter();
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("timeline");
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -178,7 +179,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
           </div>
         </div>
 
-        <Tabs defaultValue="timeline" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="bg-card/50 border border-border p-1">
             <TabsTrigger value="timeline">Timeline do Projeto</TabsTrigger>
             <TabsTrigger value="kanban">Roadmap</TabsTrigger>
@@ -234,7 +235,11 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
 
                             {phase.id === project.current_phase && (
                               <div className="mt-4 pt-4 border-t border-primary/20">
-                                <Button size="sm" className="w-full gap-2">
+                                <Button
+                                  size="sm"
+                                  className="w-full gap-2"
+                                  onClick={() => setActiveTab("agent-config")}
+                                >
                                   <Sparkles className="h-4 w-4" /> Acompanhar Agentes
                                 </Button>
                               </div>
