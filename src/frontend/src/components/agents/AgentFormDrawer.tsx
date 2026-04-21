@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Agent, AgentProvider, AgentSkill } from "@/types/agent";
@@ -128,7 +128,10 @@ export function AgentFormDrawer({
     }
   }, [agent, form]);
 
-  const selectedProvider = form.watch("provider");
+  const selectedProvider = useWatch({
+    control: form.control,
+    name: "provider",
+  });
 
   useEffect(() => {
     if (!agent) { // only auto-select on create
