@@ -181,7 +181,7 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
             <span className="font-medium">Filtros:</span>
           </div>
 
-          <Select value={typeFilter} onValueChange={(v: string) => isTaskTypeFilter(v) && setTypeFilter(v)}>
+          <Select value={typeFilter} onValueChange={(v: string | null) => v && isTaskTypeFilter(v) && setTypeFilter(v)}>
             <SelectTrigger className="w-[140px] bg-background">
               <SelectValue placeholder="Tipo" />
             </SelectTrigger>
@@ -195,7 +195,7 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
             </SelectContent>
           </Select>
 
-          <Select value={complexityFilter} onValueChange={(v: string) => isTaskComplexityFilter(v) && setComplexityFilter(v)}>
+          <Select value={complexityFilter} onValueChange={(v: string | null) => v && isTaskComplexityFilter(v) && setComplexityFilter(v)}>
             <SelectTrigger className="w-[150px] bg-background">
               <SelectValue placeholder="Complexidade" />
             </SelectTrigger>

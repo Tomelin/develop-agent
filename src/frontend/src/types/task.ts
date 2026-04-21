@@ -1,6 +1,6 @@
 export type TaskType = "FRONTEND" | "BACKEND" | "INFRA" | "TEST" | "DOC";
 export type TaskComplexity = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
-export type TaskStatus = "TODO" | "IN_PROGRESS" | "DONE" | "BLOCKED";
+export type TaskStatus = "TODO" | "IN_PROGRESS" | "REVIEW" | "DONE" | "BLOCKED";
 
 export interface Task {
   id: string;
@@ -24,4 +24,10 @@ export interface TaskListResponse {
   page: number;
   size: number;
   pages: number;
+}
+
+// Extended Task to include track and dependencies
+export interface RoadmapTask extends Task {
+  track?: "FRONTEND" | "BACKEND" | "FULL";
+  dependencies?: string[];
 }

@@ -318,7 +318,7 @@ export function PromptsManager() {
           <Button variant="outline" onClick={() => setImportOpen(true)} className="gap-2">
             <FileUp className="h-4 w-4" /> Importar
           </Button>
-          <Button variant="secondary" asChild>
+          <Button variant="secondary" >
             <Link href="/prompts/preview">Abrir Preview de Composição</Link>
           </Button>
         </CardContent>

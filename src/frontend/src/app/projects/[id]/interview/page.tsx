@@ -167,7 +167,7 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8 lg:px-10">
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border/60 bg-card/60 p-5 shadow-[0_0_60px_-35px_var(--color-primary)] backdrop-blur-xl">
           <div className="space-y-2">
-            <Button variant="ghost" asChild className="-ml-2 px-2 text-muted-foreground">
+            <Button variant="ghost"  className="-ml-2 px-2 text-muted-foreground">
               <Link href={`/projects/${resolvedParams.id}`}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Voltar para projeto
@@ -191,7 +191,7 @@ export default function InterviewPage({ params }: { params: Promise<{ id: string
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">Chat da Entrevista</CardTitle>
                 <Sheet>
-                  <SheetTrigger asChild>
+                  <SheetTrigger >
                     <Button variant="outline" size="sm">Pré-visualizar VISION.md</Button>
                   </SheetTrigger>
                   <SheetContent className="w-full overflow-y-auto border-border/80 bg-card sm:max-w-3xl">
