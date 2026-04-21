@@ -295,9 +295,9 @@ export function Phase13DeliveryCenter({ project }: Phase13DeliveryCenterProps) {
             <Button className="flex-1 gap-2" onClick={downloadZip}>
               <Download className="h-4 w-4" /> Baixar Artefatos
             </Button>
-            <Button variant="outline" className="flex-1" asChild>
-              <Link href="/projects/new">Criar Novo Projeto</Link>
-            </Button>
+            <Link href="/projects/new" className="flex-1">
+              <Button variant="outline" className="w-full">Criar Novo Projeto</Button>
+            </Link>
           </div>
         </DialogContent>
       </Dialog>
