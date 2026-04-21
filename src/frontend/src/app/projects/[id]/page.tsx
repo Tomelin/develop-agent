@@ -18,6 +18,7 @@ import { Phase6ExecutionPanel } from "@/components/projects/Phase6ExecutionPanel
 import { Phase8Workspace } from "@/components/projects/phase8/Phase8Workspace";
 import { Phase5DevelopmentCenter } from "@/components/projects/phase5/Phase5DevelopmentCenter";
 import { SecurityAuditPanel } from "@/components/projects/phase7/SecurityAuditPanel";
+import { Phase13DeliveryCenter } from "@/components/projects/phase13/Phase13DeliveryCenter";
 
 export default function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -176,6 +177,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
             <TabsTrigger value="phase6">Fase 06</TabsTrigger>
             <TabsTrigger value="phase8">Fase 08</TabsTrigger>
             <TabsTrigger value="phase12">Segurança</TabsTrigger>
+            <TabsTrigger value="delivery">Entrega</TabsTrigger>
             <TabsTrigger value="settings">Configurações</TabsTrigger>
           </TabsList>
 
@@ -316,6 +318,11 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
 
           <TabsContent value="phase12" className="mt-6">
             <SecurityAuditPanel projectId={project.id} />
+          </TabsContent>
+
+
+          <TabsContent value="delivery" className="mt-6">
+            <Phase13DeliveryCenter project={project} />
           </TabsContent>
 
           <TabsContent value="settings" className="mt-6">
