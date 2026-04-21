@@ -72,21 +72,21 @@ export default function DashboardLayout({
                   Organização
                 </Link>
                 <Link
-                  href="/marketplace"
+                  href="/dashboard/marketplace"
                   className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                 >
                   <Store className="mr-2 h-4 w-4" />
                   Marketplace
                 </Link>
                 <Link
-                  href="/roadmap"
+                  href="/dashboard/roadmap"
                   className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                 >
                   <Map className="mr-2 h-4 w-4" />
                   Roadmap
                 </Link>
                 <Link
-                  href="/pricing"
+                  href="/dashboard/pricing"
                   className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                 >
                   <CreditCard className="mr-2 h-4 w-4" />
@@ -95,21 +95,21 @@ export default function DashboardLayout({
                 {user?.role === "ADMIN" && (
                   <>
                     <Link
-                      href="/admin/quality-report"
+                      href="/dashboard/admin/quality-report"
                       className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                     >
                       <BarChart3 className="mr-2 h-4 w-4" />
                       Qualidade
                     </Link>
                     <Link
-                      href="/admin/settings"
+                      href="/dashboard/admin/settings"
                       className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                     >
                       <ShieldCheck className="mr-2 h-4 w-4" />
                       Admin
                     </Link>
                     <Link
-                      href="/admin/roadmap"
+                      href="/dashboard/admin/roadmap"
                       className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                     >
                       <Map className="mr-2 h-4 w-4" />

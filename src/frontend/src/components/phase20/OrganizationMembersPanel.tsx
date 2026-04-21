@@ -95,8 +95,8 @@ export function OrganizationMembersPanel() {
         </div>
 
         <div className="space-y-2">
-          {loading ? <p className="text-sm text-muted-foreground">Carregando membros...</p> : members.map((member) => (
-            <div key={member.user_id} className="flex flex-col gap-3 rounded-xl border p-3 md:flex-row md:items-center md:justify-between">
+          {loading ? <p className="text-sm text-muted-foreground">Carregando membros...</p> : members.map((member, index) => (
+            <div key={`${member.user_id || member.email || "member"}-${index}`} className="flex flex-col gap-3 rounded-xl border p-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="font-medium">{member.name}</p>
                 <p className="text-sm text-muted-foreground">{member.email}</p>
