@@ -21,6 +21,10 @@ import { SecurityAuditPanel } from "@/components/projects/phase7/SecurityAuditPa
 import { Phase13DeliveryCenter } from "@/components/projects/phase13/Phase13DeliveryCenter";
 import { Phase14LandingCenter } from "@/components/projects/phase14/Phase14LandingCenter";
 import { Phase15MarketingCenter } from "@/components/projects/phase15/Phase15MarketingCenter";
+import { DynamicModeControl } from "@/components/projects/phase17/DynamicModeControl";
+import { TriadCompositionPanel } from "@/components/projects/phase17/TriadCompositionPanel";
+import { DiversityInsightsCard } from "@/components/projects/phase17/DiversityInsightsCard";
+import { AgentPhaseMatrix } from "@/components/projects/phase17/AgentPhaseMatrix";
 
 export default function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -182,6 +186,8 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
             {project.flow_type === "C" && <TabsTrigger value="phase15">Fluxo C</TabsTrigger>}
             <TabsTrigger value="phase12">Segurança</TabsTrigger>
             <TabsTrigger value="delivery">Entrega</TabsTrigger>
+            <TabsTrigger value="triad">Tríade IA</TabsTrigger>
+            <TabsTrigger value="agent-config">Config. de Agentes</TabsTrigger>
             <TabsTrigger value="settings">Configurações</TabsTrigger>
           </TabsList>
 
@@ -339,6 +345,17 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
 
           <TabsContent value="delivery" className="mt-6">
             <Phase13DeliveryCenter project={project} />
+          </TabsContent>
+
+
+          <TabsContent value="triad" className="mt-6 space-y-6">
+            <DynamicModeControl projectId={project.id} initialEnabled={project.dynamic_mode} />
+            <TriadCompositionPanel projectId={project.id} />
+            <DiversityInsightsCard projectId={project.id} />
+          </TabsContent>
+
+          <TabsContent value="agent-config" className="mt-6">
+            <AgentPhaseMatrix projectId={project.id} />
           </TabsContent>
 
           <TabsContent value="settings" className="mt-6">
