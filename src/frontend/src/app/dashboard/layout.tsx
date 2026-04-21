@@ -3,7 +3,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { PrivateRoute } from "@/components/auth/PrivateRoute";
 import Link from "next/link";
-import { LayoutDashboard, User as UserIcon, LogOut, Bot, WandSparkles, ReceiptText, ShieldCheck, BarChart3 } from "lucide-react";
+import { LayoutDashboard, User as UserIcon, LogOut, Bot, WandSparkles, ReceiptText, ShieldCheck, BarChart3, Building2, Store, Map, CreditCard } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -64,6 +64,34 @@ export default function DashboardLayout({
                   <ReceiptText className="mr-2 h-4 w-4" />
                   Billing
                 </Link>
+                <Link
+                  href="/dashboard/organization"
+                  className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <Building2 className="mr-2 h-4 w-4" />
+                  Organização
+                </Link>
+                <Link
+                  href="/marketplace"
+                  className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <Store className="mr-2 h-4 w-4" />
+                  Marketplace
+                </Link>
+                <Link
+                  href="/roadmap"
+                  className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <Map className="mr-2 h-4 w-4" />
+                  Roadmap
+                </Link>
+                <Link
+                  href="/pricing"
+                  className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  Pricing
+                </Link>
                 {user?.role === "ADMIN" && (
                   <>
                     <Link
@@ -79,6 +107,13 @@ export default function DashboardLayout({
                     >
                       <ShieldCheck className="mr-2 h-4 w-4" />
                       Admin
+                    </Link>
+                    <Link
+                      href="/admin/roadmap"
+                      className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      <Map className="mr-2 h-4 w-4" />
+                      Roadmap Admin
                     </Link>
                   </>
                 )}

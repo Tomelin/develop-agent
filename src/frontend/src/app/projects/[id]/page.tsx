@@ -25,6 +25,8 @@ import { DynamicModeControl } from "@/components/projects/phase17/DynamicModeCon
 import { TriadCompositionPanel } from "@/components/projects/phase17/TriadCompositionPanel";
 import { DiversityInsightsCard } from "@/components/projects/phase17/DiversityInsightsCard";
 import { AgentPhaseMatrix } from "@/components/projects/phase17/AgentPhaseMatrix";
+import { ProjectTeamPanel } from "@/components/phase20/ProjectTeamPanel";
+import { ProjectIntegrationsPanel } from "@/components/phase20/ProjectIntegrationsPanel";
 
 export default function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -188,6 +190,8 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
             <TabsTrigger value="delivery">Entrega</TabsTrigger>
             <TabsTrigger value="triad">Tríade IA</TabsTrigger>
             <TabsTrigger value="agent-config">Config. de Agentes</TabsTrigger>
+            <TabsTrigger value="team">Equipe</TabsTrigger>
+            <TabsTrigger value="integrations">Integrações</TabsTrigger>
             <TabsTrigger value="settings">Configurações</TabsTrigger>
           </TabsList>
 
@@ -356,6 +360,14 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
 
           <TabsContent value="agent-config" className="mt-6">
             <AgentPhaseMatrix projectId={project.id} />
+          </TabsContent>
+
+          <TabsContent value="team" className="mt-6">
+            <ProjectTeamPanel projectId={project.id} />
+          </TabsContent>
+
+          <TabsContent value="integrations" className="mt-6">
+            <ProjectIntegrationsPanel projectId={project.id} />
           </TabsContent>
 
           <TabsContent value="settings" className="mt-6">
