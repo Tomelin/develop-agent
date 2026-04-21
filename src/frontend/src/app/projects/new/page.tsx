@@ -156,6 +156,7 @@ export default function NewProjectPage() {
 
   const onSubmit = async (data: ProjectFormValues) => {
     if (currentStep !== 2) return;
+    if (isSubmitting) return;
 
     setIsSubmitting(true);
     try {
