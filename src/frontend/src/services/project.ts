@@ -10,6 +10,7 @@ const FLOW_TO_API: Record<FlowType, "SOFTWARE" | "LANDING_PAGE" | "MARKETING"> =
   C: "MARKETING",
 };
 
+<<<<<<< codex/fix-uncontrolled-select-default-value-warning-eoc00d
 const FLOW_FROM_API: Record<string, FlowType> = {
   A: "A",
   B: "B",
@@ -34,6 +35,8 @@ const normalizeProject = (raw: Record<string, unknown>): Project => ({
   updated_at: String(raw.updated_at ?? ""),
 });
 
+=======
+>>>>>>> main
 export const ProjectService = {
   getProjects: async (page = 1, size = 10, status?: ProjectStatus, flow_type?: FlowType): Promise<ProjectListResponse> => {
     const params = new URLSearchParams({
@@ -68,7 +71,11 @@ export const ProjectService = {
       dynamic_mode_enabled: data.dynamic_mode,
     };
     const response = await api.post("/projects", payload);
+<<<<<<< codex/fix-uncontrolled-select-default-value-warning-eoc00d
     return normalizeProject(response.data);
+=======
+    return response.data;
+>>>>>>> main
   },
 
   updateProject: async (id: string, data: Partial<Project>): Promise<Project> => {
