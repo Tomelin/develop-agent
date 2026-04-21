@@ -105,7 +105,16 @@ export default function AgentsPage() {
         toast.error("Apenas administradores podem alterar o status do agente");
         return;
       }
-      await agentService.updateAgent(agent.id, { enabled: checked });
+      await agentService.updateAgent(agent.id, {
+        name: agent.name,
+        description: agent.description,
+        provider: agent.provider,
+        model: agent.model,
+        system_prompts: agent.system_prompts,
+        skills: agent.skills,
+        api_key_ref: agent.api_key_ref,
+        enabled: checked,
+      });
       setAgents(agents.map(a => a.id === agent.id ? { ...a, enabled: checked } : a));
       toast.success(`Agente ${agent.name} ${checked ? 'habilitado' : 'desabilitado'}`);
     } catch (error) {
