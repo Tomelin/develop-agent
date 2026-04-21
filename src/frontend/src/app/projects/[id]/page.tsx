@@ -140,6 +140,13 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
           </div>
 
           <div className="flex items-center gap-2">
+            {project.flow_type === "A" && (
+              <Button variant="secondary" size="sm" asChild>
+                <Link href={`/projects/${project.id}/interview`}>
+                  <MessagesSquare className="mr-2 h-4 w-4" /> Entrevista
+                </Link>
+              </Button>
+            )}
             {project.status === "IN_PROGRESS" && (
               <Button variant="outline" size="sm" onClick={() => handleAction('pause')}>
                 <Pause className="mr-2 h-4 w-4" /> Pausar
