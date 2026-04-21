@@ -4,6 +4,12 @@ import { TaskListResponse, TaskStatus } from "../types/task";
 import { Phase6AnalyzeCoverageResponse, Phase6ValidationResult } from "../types/phase6";
 import { Phase5CodeContext, Phase5CodeFile, Phase5ExecutionMode, Phase5FileListResponse, Phase5Summary } from "../types/phase5";
 
+const FLOW_TO_API: Record<FlowType, "SOFTWARE" | "LANDING_PAGE" | "MARKETING"> = {
+  A: "SOFTWARE",
+  B: "LANDING_PAGE",
+  C: "MARKETING",
+};
+
 export const ProjectService = {
   getProjects: async (page = 1, size = 10, status?: ProjectStatus, flow_type?: FlowType): Promise<ProjectListResponse> => {
     const params = new URLSearchParams({
@@ -23,7 +29,14 @@ export const ProjectService = {
   },
 
   createProject: async (data: ProjectCreateRequest): Promise<Project> => {
-    const response = await api.post("/projects", data);
+    const payload = {
+      name: data.name,
+      description: data.description,
+      flow_type: FLOW_TO_API[data.flow_type],
+      linked_project_id: data.linked_project_id,
+      dynamic_mode_enabled: data.dynamic_mode,
+    };
+    const response = await api.post("/projects", payload);
     return response.data;
   },
 

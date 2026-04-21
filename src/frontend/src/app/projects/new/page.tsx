@@ -18,6 +18,7 @@ import { Project, FlowType } from "@/types/project";
 import { LandingPageManualBrief } from "@/types/phase14";
 import { toast } from "sonner";
 import Link from "next/link";
+import { isAxiosError } from "axios";
 
 const projectSchema = z.object({
   flow_type: z.enum(["A", "B", "C"]),
@@ -89,10 +90,15 @@ export default function NewProjectPage() {
       ProjectService.getProjects(1, 100).then((res) => {
         // Only allow linking to projects that are well advanced (e.g. COMPLETED or IN_PROGRESS at later phases)
         // For simplicity we show all, but ideally we filter by status and phase
-        setAvailableProjects(res.items.filter(p => p.flow_type === "A"));
+        const softwareProjects = res.items.filter(p => p.flow_type === "A");
+        setAvailableProjects(softwareProjects);
+        const currentLinkedProject = form.getValues("linked_project_id");
+        if ((!currentLinkedProject || currentLinkedProject === "none") && softwareProjects.length > 0) {
+          form.setValue("linked_project_id", softwareProjects[0].id, { shouldValidate: true });
+        }
       }).catch(console.error);
     }
-  }, [watchFlowType]);
+  }, [watchFlowType, form]);
 
   const handleNext = async () => {
     let isValid = false;
@@ -127,6 +133,14 @@ export default function NewProjectPage() {
         if (required.some((value) => !value || !value.trim())) {
           isValid = false;
           toast.error("Preencha todos os campos obrigatórios do brief manual da landing page.");
+        }
+      }
+
+      if (isValid && (watchFlowType === "B" || watchFlowType === "C")) {
+        const linkedProjectId = form.getValues("linked_project_id");
+        if (!linkedProjectId || linkedProjectId === "none") {
+          isValid = false;
+          toast.error("Selecione um projeto base para Fluxo B/C.");
         }
       }
     }
@@ -186,7 +200,11 @@ export default function NewProjectPage() {
       router.push(`/projects/${createdProject.id}`);
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao criar projeto. Verifique os dados e tente novamente.");
+      if (isAxiosError(error)) {
+        toast.error(error.response?.data?.error || "Erro ao criar projeto. Verifique os dados e tente novamente.");
+      } else {
+        toast.error("Erro ao criar projeto. Verifique os dados e tente novamente.");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -355,18 +373,17 @@ export default function NewProjectPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Projeto Base (Herança de Contexto)</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                              <SelectTrigger className="bg-background">
-                                <SelectValue placeholder="Selecione um projeto de software para herdar o branding..." />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="none">Não vincular projeto</SelectItem>
+                            <SelectTrigger className="bg-background">
+                              <SelectValue placeholder="Selecione um projeto de software para herdar o branding..." />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
                               {availableProjects.map(p => (
                                 <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                               ))}
-                            </SelectContent>
+                          </SelectContent>
                           </Select>
                           <FormDescription>
                             O sistema extrairá a paleta de cores, tecnologias e a identidade visual do projeto selecionado.
