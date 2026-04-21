@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -62,6 +62,10 @@ export function ProfileSettings() {
       confirm_password: "",
     },
   });
+
+  useEffect(() => {
+    profileForm.reset({ name: user?.name || "" });
+  }, [user?.name, profileForm]);
 
   async function onProfileSubmit(values: z.infer<typeof profileSchema>) {
     setIsUpdatingName(true);
