@@ -8,7 +8,9 @@ export const RoadmapService = {
   },
 
   getRoadmapData: async (projectId: string): Promise<RoadmapData> => {
-    const response = await api.get(`/projects/${projectId}/roadmap`);
+    const response = await api.get(`/projects/${projectId}/roadmap/export`, {
+      params: { format: "json" },
+    });
     return response.data;
   },
 
