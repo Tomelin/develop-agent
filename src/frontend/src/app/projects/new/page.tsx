@@ -6,7 +6,7 @@ import { PrivateRoute } from "@/components/auth/PrivateRoute";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, LayoutTemplate, Megaphone, MonitorPlay, Sparkles } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -51,7 +51,10 @@ export default function NewProjectPage() {
     mode: "onChange",
   });
 
-  const watchFlowType = form.watch("flow_type");
+  const watchFlowType = useWatch({
+    control: form.control,
+    name: "flow_type",
+  });
 
   useEffect(() => {
     if (watchFlowType === "B" || watchFlowType === "C") {
