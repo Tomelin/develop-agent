@@ -1,6 +1,7 @@
 import { api } from "./api";
 import { Project, ProjectListResponse, ProjectCreateRequest, ProjectStatus, FlowType } from "../types/project";
 import { Task, TaskListResponse, TaskStatus } from "../types/task";
+import { Phase6AnalyzeCoverageResponse, Phase6ValidationResult } from "../types/phase6";
 
 export const ProjectService = {
   getProjects: async (page = 1, size = 10, status?: ProjectStatus, flow_type?: FlowType): Promise<ProjectListResponse> => {
@@ -54,5 +55,16 @@ export const ProjectService = {
   updateTaskStatus: async (projectId: string, taskId: string, status: TaskStatus): Promise<Task> => {
     const response = await api.put(`/projects/${projectId}/tasks/${taskId}/status`, { status });
     return response.data;
-  }
+  },
+
+  analyzePhase6Coverage: async (projectId: string, payload: { backend_dir: string; threshold?: number }): Promise<Phase6AnalyzeCoverageResponse> => {
+    const response = await api.post(`/projects/${projectId}/phases/6/analyze-coverage`, payload);
+    return response.data;
+  },
+
+  validatePhase6Tests: async (projectId: string, payload: { backend_dir: string; frontend_dir: string }): Promise<Phase6ValidationResult> => {
+    const response = await api.post(`/projects/${projectId}/phases/6/validate-tests`, payload);
+    return response.data;
+  },
+
 };

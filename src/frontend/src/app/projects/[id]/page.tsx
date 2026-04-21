@@ -9,11 +9,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Play, Pause, Archive, Settings2, Sparkles, CheckCircle2, Clock, XCircle, LayoutTemplate, MonitorPlay, Megaphone, Activity, FileCode2, MessagesSquare, CheckSquare, Coins, FolderKanban } from "lucide-react";
+import { ArrowLeft, Play, Pause, Archive, Settings2, Sparkles, CheckCircle2, Clock, XCircle, LayoutTemplate, MonitorPlay, Megaphone, Activity, FileCode2, MessagesSquare, CheckSquare, Coins } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import { KanbanBoard } from "@/components/projects/KanbanBoard";
+import { Phase6ExecutionPanel } from "@/components/projects/Phase6ExecutionPanel";
 
 export default function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -161,6 +162,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
           <TabsList className="bg-card/50 border border-border p-1">
             <TabsTrigger value="timeline">Timeline do Projeto</TabsTrigger>
             <TabsTrigger value="kanban">Kanban de Tasks</TabsTrigger>
+            <TabsTrigger value="phase6">Fase 06</TabsTrigger>
             <TabsTrigger value="settings">Configurações</TabsTrigger>
           </TabsList>
 
@@ -268,6 +270,11 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
 
           <TabsContent value="kanban" className="mt-6">
             <KanbanBoard projectId={project.id} />
+          </TabsContent>
+
+
+          <TabsContent value="phase6" className="mt-6">
+            <Phase6ExecutionPanel projectId={project.id} />
           </TabsContent>
 
           <TabsContent value="settings" className="mt-6">
