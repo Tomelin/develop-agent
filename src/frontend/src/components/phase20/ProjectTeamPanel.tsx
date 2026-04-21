@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,7 +17,7 @@ export function ProjectTeamPanel({ projectId }: { projectId: string }) {
   const [role, setRole] = useState<CollaboratorRole>("EDITOR");
   const [collaborators, setCollaborators] = useState<ProjectCollaborator[]>([]);
 
-  const loadCollaborators = async () => {
+  const loadCollaborators = useCallback(async () => {
     try {
       const data = await Phase20Service.listProjectCollaborators(projectId);
       setCollaborators(data);
@@ -25,14 +25,14 @@ export function ProjectTeamPanel({ projectId }: { projectId: string }) {
       console.error(error);
       toast.error("Falha ao carregar equipe do projeto.");
     }
-  };
+  }, [projectId]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       void loadCollaborators();
     }, 0);
     return () => clearTimeout(timer);
-  }, [projectId]);
+  }, [loadCollaborators]);
 
   const addCollaborator = async () => {
     if (!email) return;
