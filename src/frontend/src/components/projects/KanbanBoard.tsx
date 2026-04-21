@@ -14,7 +14,6 @@ import {
 } from '@dnd-kit/core';
 import {
   SortableContext,
-  arrayMove,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
@@ -23,7 +22,7 @@ import { ProjectService } from '@/services/project';
 import { SortableTaskCard } from './SortableTaskCard';
 import { TaskCard } from './TaskCard';
 import { Badge } from '@/components/ui/badge';
-import { Download, Filter, LayoutGrid } from 'lucide-react';
+import { Download, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
@@ -38,6 +37,15 @@ const COLUMNS: { id: TaskStatus; title: string }[] = [
   { id: 'BLOCKED', title: 'Bloqueado' },
   { id: 'DONE', title: 'Concluído' },
 ];
+
+const TASK_TYPE_VALUES: Array<TaskType | 'ALL'> = ['ALL', 'FRONTEND', 'BACKEND', 'INFRA', 'TEST', 'DOC'];
+const TASK_COMPLEXITY_VALUES: Array<TaskComplexity | 'ALL'> = ['ALL', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+
+const isTaskTypeFilter = (value: string): value is TaskType | 'ALL' =>
+  TASK_TYPE_VALUES.includes(value as TaskType | 'ALL');
+
+const isTaskComplexityFilter = (value: string): value is TaskComplexity | 'ALL' =>
+  TASK_COMPLEXITY_VALUES.includes(value as TaskComplexity | 'ALL');
 
 export function KanbanBoard({ projectId }: KanbanBoardProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -139,7 +147,7 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
       try {
         await ProjectService.updateTaskStatus(projectId, activeId.toString(), overStatus);
         toast.success(`Task movida para ${COLUMNS.find(c => c.id === overStatus)?.title}`);
-      } catch (error) {
+      } catch {
         toast.error("Erro ao atualizar status da task");
         // Revert on error
         setTasks((prev) =>
@@ -173,7 +181,7 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
             <span className="font-medium">Filtros:</span>
           </div>
 
-          <Select value={typeFilter} onValueChange={(v: string | null) => v && setTypeFilter(v as any)}>
+          <Select value={typeFilter} onValueChange={(v: string) => isTaskTypeFilter(v) && setTypeFilter(v)}>
             <SelectTrigger className="w-[140px] bg-background">
               <SelectValue placeholder="Tipo" />
             </SelectTrigger>
@@ -187,7 +195,7 @@ export function KanbanBoard({ projectId }: KanbanBoardProps) {
             </SelectContent>
           </Select>
 
-          <Select value={complexityFilter} onValueChange={(v: string | null) => v && setComplexityFilter(v as any)}>
+          <Select value={complexityFilter} onValueChange={(v: string) => isTaskComplexityFilter(v) && setComplexityFilter(v)}>
             <SelectTrigger className="w-[150px] bg-background">
               <SelectValue placeholder="Complexidade" />
             </SelectTrigger>
