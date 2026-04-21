@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -42,6 +42,7 @@ const formSchema = z.object({
   description: z.string().min(10, "Descrição muito curta"),
   provider: z.enum(["OPENAI", "ANTHROPIC", "GOOGLE", "OLLAMA"]),
   model: z.string().min(2, "Modelo é obrigatório"),
+  api_key_ref: z.string().optional(),
   system_prompts: z.array(
     z.object({ value: z.string().min(1, "Prompt não pode ser vazio") })
   ).min(1, "Adicione pelo menos um prompt"),
@@ -85,6 +86,13 @@ export function AgentFormDrawer({
   const [loading, setLoading] = useState(false);
   const [testingConfig, setTestingConfig] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
+  const [customModelInput, setCustomModelInput] = useState("");
+  const [customModelsByProvider, setCustomModelsByProvider] = useState<Record<AgentProvider, string[]>>({
+    OPENAI: [],
+    ANTHROPIC: [],
+    GOOGLE: [],
+    OLLAMA: [],
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -93,6 +101,7 @@ export function AgentFormDrawer({
       description: "",
       provider: "OPENAI",
       model: "",
+      api_key_ref: "",
       system_prompts: [{ value: "" }],
       skills: [],
       enabled: true,
@@ -111,6 +120,7 @@ export function AgentFormDrawer({
         description: agent.description,
         provider: agent.provider,
         model: agent.model,
+        api_key_ref: agent.api_key_ref || "",
         system_prompts: agent.system_prompts.map(p => ({ value: p })),
         skills: agent.skills,
         enabled: agent.enabled,
@@ -121,6 +131,7 @@ export function AgentFormDrawer({
         description: "",
         provider: "OPENAI",
         model: "gpt-4o",
+        api_key_ref: "",
         system_prompts: [{ value: "Você é um especialista em IA..." }],
         skills: [],
         enabled: true,
@@ -132,12 +143,44 @@ export function AgentFormDrawer({
     control: form.control,
     name: "provider",
   });
+  const selectedModel = useWatch({
+    control: form.control,
+    name: "model",
+  });
+
+  const modelOptions = useMemo(() => (
+    Array.from(new Set([
+      ...MODELS[selectedProvider as AgentProvider],
+      ...customModelsByProvider[selectedProvider as AgentProvider],
+      ...(selectedModel ? [selectedModel] : []),
+    ]))
+  ), [selectedProvider, customModelsByProvider, selectedModel]);
 
   useEffect(() => {
     if (!agent) { // only auto-select on create
-      form.setValue("model", MODELS[selectedProvider][0]);
+      form.setValue("model", modelOptions[0]);
     }
-  }, [selectedProvider, form, agent]);
+  }, [selectedProvider, form, agent, modelOptions]);
+
+  const handleAddCustomModel = () => {
+    const model = customModelInput.trim();
+    if (!model) return;
+
+    const provider = selectedProvider as AgentProvider;
+    const alreadyExists = [...MODELS[provider], ...customModelsByProvider[provider]].includes(model);
+    if (alreadyExists) {
+      form.setValue("model", model, { shouldValidate: true });
+      setCustomModelInput("");
+      return;
+    }
+
+    setCustomModelsByProvider((current) => ({
+      ...current,
+      [provider]: [...current[provider], model],
+    }));
+    form.setValue("model", model, { shouldValidate: true });
+    setCustomModelInput("");
+  };
 
   const toggleSkill = (skill: AgentSkill) => {
     const current = form.getValues("skills");
@@ -251,7 +294,7 @@ export function AgentFormDrawer({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Provider (LLM)</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione..." />
@@ -282,11 +325,43 @@ export function AgentFormDrawer({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {MODELS[selectedProvider as AgentProvider]?.map(model => (
+                          {modelOptions.map(model => (
                             <SelectItem key={model} value={model}>{model}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
+                      <div className="mt-2 flex gap-2">
+                        <Input
+                          placeholder="Cadastrar outro modelo (ex: gpt-4.1)"
+                          value={customModelInput}
+                          onChange={(e) => setCustomModelInput(e.target.value)}
+                        />
+                        <Button type="button" variant="outline" onClick={handleAddCustomModel}>
+                          Adicionar
+                        </Button>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="api_key_ref"
+                  render={({ field }) => (
+                    <FormItem className="col-span-2">
+                      <FormLabel>Chave de API (Secret / API Key)</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="sk-api-key..."
+                          type="password"
+                          {...field}
+                          value={field.value ?? ""}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        A chave de API para autenticação junto ao provedor de IA (OpenAI, Anthropic, etc).
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
