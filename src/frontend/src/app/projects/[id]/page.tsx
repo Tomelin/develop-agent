@@ -13,7 +13,7 @@ import { ArrowLeft, Play, Pause, Archive, Settings2, Sparkles, CheckCircle2, Clo
 import Link from "next/link";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
-import { KanbanBoard } from "@/components/projects/KanbanBoard";
+
 import { Phase6ExecutionPanel } from "@/components/projects/Phase6ExecutionPanel";
 import { Phase8Workspace } from "@/components/projects/phase8/Phase8Workspace";
 
@@ -142,7 +142,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
 
           <div className="flex items-center gap-2">
             {project.flow_type === "A" && (
-              <Button variant="secondary" size="sm" asChild>
+              <Button variant="secondary" size="sm" >
                 <Link href={`/projects/${project.id}/interview`}>
                   <MessagesSquare className="mr-2 h-4 w-4" /> Entrevista
                 </Link>
@@ -169,7 +169,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
         <Tabs defaultValue="timeline" className="w-full">
           <TabsList className="bg-card/50 border border-border p-1">
             <TabsTrigger value="timeline">Timeline do Projeto</TabsTrigger>
-            <TabsTrigger value="kanban">Kanban de Tasks</TabsTrigger>
+            <TabsTrigger value="kanban">Roadmap</TabsTrigger>
             <TabsTrigger value="phase6">Fase 06</TabsTrigger>
             <TabsTrigger value="phase8">Fase 08</TabsTrigger>
             <TabsTrigger value="settings">Configurações</TabsTrigger>
@@ -278,7 +278,21 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
           </TabsContent>
 
           <TabsContent value="kanban" className="mt-6">
-            <KanbanBoard projectId={project.id} />
+
+            <div className="flex flex-col items-center justify-center p-12 text-center bg-card/30 rounded-xl border border-border mt-4">
+              <LayoutTemplate className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Roadmap & KanBan</h3>
+              <p className="text-muted-foreground mb-6 max-w-md">
+                Gerencie o progresso do desenvolvimento, visualize épicos, dependências e a timeline do projeto.
+              </p>
+              <Link href={`/projects/${project.id}/roadmap`}>
+                <Button className="gap-2">
+                  <LayoutTemplate className="h-4 w-4" />
+                  Abrir Dashboard do Roadmap
+                </Button>
+              </Link>
+            </div>
+
           </TabsContent>
 
 

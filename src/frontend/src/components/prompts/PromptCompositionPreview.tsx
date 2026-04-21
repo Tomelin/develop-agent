@@ -103,7 +103,7 @@ export function PromptCompositionPreview() {
 
           <div className="space-y-2">
             <p className="text-sm font-medium">Agente</p>
-            <Select value={agentId} onValueChange={setAgentId}>
+            <Select value={agentId} onValueChange={(v: string | null) => v && setAgentId(v)}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione um agente" />
               </SelectTrigger>

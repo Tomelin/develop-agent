@@ -157,7 +157,7 @@ export default function DashboardPage() {
               />
             </div>
             <div className="flex w-full sm:w-auto gap-2">
-              <Select value={statusFilter} onValueChange={(v: string) => isProjectStatusFilter(v) && setStatusFilter(v)}>
+              <Select value={statusFilter} onValueChange={(v: string | null) => v && isProjectStatusFilter(v) && setStatusFilter(v)}>
                 <SelectTrigger className="w-[140px] bg-background">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
@@ -169,7 +169,7 @@ export default function DashboardPage() {
                   <SelectItem value="COMPLETED">Concluído</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={flowFilter} onValueChange={(v: string) => isFlowTypeFilter(v) && setFlowFilter(v)}>
+              <Select value={flowFilter} onValueChange={(v: string | null) => v && isFlowTypeFilter(v) && setFlowFilter(v)}>
                 <SelectTrigger className="w-[140px] bg-background">
                   <SelectValue placeholder="Fluxo" />
                 </SelectTrigger>

@@ -1,13 +1,11 @@
-"use client";
-
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Task } from '@/types/task';
+import { RoadmapTask } from '@/types/task';
 import { TaskCard } from './TaskCard';
 
 interface SortableTaskCardProps {
-  task: Task;
+  task: RoadmapTask;
 }
 
 export function SortableTaskCard({ task }: SortableTaskCardProps) {
@@ -23,12 +21,11 @@ export function SortableTaskCard({ task }: SortableTaskCardProps) {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.4 : 1,
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <TaskCard task={task} />
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="touch-none">
+      <TaskCard task={task} isDragging={isDragging} />
     </div>
   );
 }
