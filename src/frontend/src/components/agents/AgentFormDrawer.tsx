@@ -42,6 +42,7 @@ const formSchema = z.object({
   description: z.string().min(10, "Descrição muito curta"),
   provider: z.enum(["OPENAI", "ANTHROPIC", "GOOGLE", "OLLAMA"]),
   model: z.string().min(2, "Modelo é obrigatório"),
+  api_key_ref: z.string().optional(),
   system_prompts: z.array(
     z.object({ value: z.string().min(1, "Prompt não pode ser vazio") })
   ).min(1, "Adicione pelo menos um prompt"),
@@ -93,6 +94,7 @@ export function AgentFormDrawer({
       description: "",
       provider: "OPENAI",
       model: "",
+      api_key_ref: "",
       system_prompts: [{ value: "" }],
       skills: [],
       enabled: true,
@@ -111,6 +113,7 @@ export function AgentFormDrawer({
         description: agent.description,
         provider: agent.provider,
         model: agent.model,
+        api_key_ref: agent.api_key_ref || "",
         system_prompts: agent.system_prompts.map(p => ({ value: p })),
         skills: agent.skills,
         enabled: agent.enabled,
@@ -121,6 +124,7 @@ export function AgentFormDrawer({
         description: "",
         provider: "OPENAI",
         model: "gpt-4o",
+        api_key_ref: "",
         system_prompts: [{ value: "Você é um especialista em IA..." }],
         skills: [],
         enabled: true,
@@ -251,7 +255,7 @@ export function AgentFormDrawer({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Provider (LLM)</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione..." />
@@ -287,6 +291,28 @@ export function AgentFormDrawer({
                           ))}
                         </SelectContent>
                       </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="api_key_ref"
+                  render={({ field }) => (
+                    <FormItem className="col-span-2">
+                      <FormLabel>Chave de API (Secret / API Key)</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="sk-api-key..."
+                          type="password"
+                          {...field}
+                          value={field.value ?? ""}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        A chave de API para autenticação junto ao provedor de IA (OpenAI, Anthropic, etc).
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
