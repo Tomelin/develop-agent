@@ -10,6 +10,7 @@ Bem-vindo(a) ao Guia de Uso! Esta documentação foi criada para ajudar você a 
 5. [Marketplace](#5-marketplace)
 6. [Perfil (Profile)](#6-perfil-profile)
 7. [Preços (Pricing)](#7-preços-pricing)
+8. [Agentes (Agents)](#8-agentes-agents)
 
 ---
 
@@ -102,6 +103,24 @@ Caso precise atualizar seu plano ou visualizar o que sua assinatura atual permit
 3. Verifique os limites de uso e clique no botão de assinatura para alterar seu plano caso necessário.
 
 ![Preços](images/pricing.png)
+
+---
+
+## 8. Agentes (Agents)
+
+A seção de **Agentes** (catálogo de agentes) permite que você visualize a biblioteca de especialistas em IA disponíveis na plataforma e, se você tiver permissões de administrador, possa editar as configurações de cada um. É aqui que você pode alterar os modelos de inteligência artificial que cada agente utiliza.
+
+**Passo a passo para usar e atualizar modelos:**
+1. Navegue até a seção "Agentes" ("Agents") através do menu lateral do Dashboard.
+2. Você verá a lista de todos os agentes configurados (ex: Engenheiro de Software, Analista de Segurança, etc).
+3. Para atualizar o modelo de um agente, localize o card do agente desejado e clique no botão de **opções (três pontinhos verticais)** no canto superior direito do card.
+4. Selecione a opção **Editar**. Uma gaveta (drawer) lateral será aberta com o formulário de configurações do agente.
+5. No formulário, localize os campos **Provedor (Provider)** e **Modelo (Model)**:
+   - Primeiro, selecione o Provedor desejado (ex: OPENAI, ANTHROPIC, GOOGLE, OLLAMA).
+   - Em seguida, no campo **Modelo**, escolha o modelo específico correspondente àquele provedor (ex: `gpt-4o`, `claude-3-5-sonnet`, `gemini-1.5-pro`).
+6. Após fazer a alteração, clique em "Salvar" no final do formulário para aplicar as mudanças ao agente.
+
+![Agentes](images/agents.png)
 
 ---
 
