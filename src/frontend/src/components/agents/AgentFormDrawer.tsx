@@ -411,6 +411,28 @@ export function AgentFormDrawer({
                 />
               </div>
 
+              <FormField
+                control={form.control}
+                name="api_key_ref"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Chave de API (Secret / API Key)</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="sk-api-key..."
+                        type="password"
+                        {...field}
+                        value={field.value ?? ""}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      A chave de API para autenticação junto ao provedor de IA (OpenAI, Anthropic, etc).
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <div>
                 <FormLabel className="mb-2 block">Skills (Habilidades)</FormLabel>
                 <div className="flex flex-wrap gap-2 p-3 border rounded-md bg-muted/20">
