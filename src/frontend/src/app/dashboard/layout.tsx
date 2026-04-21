@@ -3,7 +3,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { PrivateRoute } from "@/components/auth/PrivateRoute";
 import Link from "next/link";
-import { LayoutDashboard, User as UserIcon, LogOut, Bot, WandSparkles, ReceiptText, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, User as UserIcon, LogOut, Bot, WandSparkles, ReceiptText, ShieldCheck, BarChart3 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,13 +65,22 @@ export default function DashboardLayout({
                   Billing
                 </Link>
                 {user?.role === "ADMIN" && (
-                  <Link
-                    href="/admin/settings"
-                    className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    <ShieldCheck className="mr-2 h-4 w-4" />
-                    Admin
-                  </Link>
+                  <>
+                    <Link
+                      href="/admin/quality-report"
+                      className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      <BarChart3 className="mr-2 h-4 w-4" />
+                      Qualidade
+                    </Link>
+                    <Link
+                      href="/admin/settings"
+                      className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      <ShieldCheck className="mr-2 h-4 w-4" />
+                      Admin
+                    </Link>
+                  </>
                 )}
               </nav>
             </div>
