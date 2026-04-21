@@ -47,7 +47,13 @@ export const promptService = {
 
   async getTemplates(): Promise<PromptTemplate[]> {
     const response = await api.get("/prompts/templates");
-    return response.data.items || response.data;
+    if (Array.isArray(response.data?.items)) {
+      return response.data.items;
+    }
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    return [];
   },
 
   async createFromTemplate(templateId: string, group?: PromptGroup): Promise<UserPrompt> {

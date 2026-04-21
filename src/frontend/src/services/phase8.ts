@@ -1,3 +1,4 @@
+import { isAxiosError } from "axios";
 import { api } from "./api";
 import {
   NotificationItem,
@@ -38,11 +39,25 @@ export const Phase8Service = {
   },
 
   getNotifications: async (): Promise<NotificationItem[]> => {
-    const response = await api.get("/notifications");
-    return response.data?.items ?? response.data ?? [];
+    try {
+      const response = await api.get("/notifications");
+      return response.data?.items ?? response.data ?? [];
+    } catch (error) {
+      if (isAxiosError(error) && error.response?.status === 404) {
+        return [];
+      }
+      throw error;
+    }
   },
 
   markNotificationAsRead: async (notificationId: string): Promise<void> => {
-    await api.post(`/notifications/${notificationId}/read`);
+    try {
+      await api.post(`/notifications/${notificationId}/read`);
+    } catch (error) {
+      if (isAxiosError(error) && error.response?.status === 404) {
+        return;
+      }
+      throw error;
+    }
   },
 };

@@ -139,7 +139,7 @@ export function PromptsManager() {
       });
 
       setPromptsByGroup(grouped);
-      setTemplates(templateRes);
+      setTemplates(Array.isArray(templateRes) ? templateRes : []);
     } catch {
       toast.error("Falha ao carregar prompts e templates.");
     } finally {
@@ -455,7 +455,7 @@ export function PromptsManager() {
             <DialogDescription>Biblioteca pré-definida para acelerar setup com qualidade profissional.</DialogDescription>
           </DialogHeader>
           <div className="max-h-[60vh] overflow-y-auto space-y-3 pr-1">
-            {templates.map((template) => (
+            {(Array.isArray(templates) ? templates : []).map((template) => (
               <div key={template.id} className="rounded-lg border border-border p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div>
