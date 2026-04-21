@@ -12,6 +12,8 @@ import { Agent } from "@/types/agent";
 import { phaseMatrixDefaults, PhaseAgentMatrixRow, roleKeyMap, roleLabel, TRIAD_ROLES } from "@/types/phase17";
 import { toast } from "sonner";
 
+const UNASSIGNED_AGENT = "__UNASSIGNED_AGENT__";
+
 export function AgentPhaseMatrix({ projectId }: { projectId: string }) {
   const [rows, setRows] = useState<PhaseAgentMatrixRow[]>(phaseMatrixDefaults);
   const [agents, setAgents] = useState<Agent[]>([]);
@@ -99,20 +101,23 @@ export function AgentPhaseMatrix({ projectId }: { projectId: string }) {
                   <td className="p-3 font-medium">{row.phase_label}</td>
                   {TRIAD_ROLES.map((role) => {
                     const key = roleKeyMap[role];
-                    const value = row[key] ?? undefined;
+                    const selectedAgentId = row[key] ?? null;
+                    const selectValue = selectedAgentId ?? UNASSIGNED_AGENT;
                     return (
                       <td className="p-2" key={`${row.phase_key}-${role}`}>
                         <Select
-                          value={value}
+                          value={selectValue}
                           onValueChange={(selected) => {
                             const selectedId = String(selected);
-                            setRows((prev) => prev.map((item) => item.phase_key === row.phase_key ? { ...item, [key]: selectedId, dynamic: false } : item));
+                            const nextAgentId = selectedId === UNASSIGNED_AGENT ? null : selectedId;
+                            setRows((prev) => prev.map((item) => item.phase_key === row.phase_key ? { ...item, [key]: nextAgentId, dynamic: false } : item));
                           }}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Selecionar" />
                           </SelectTrigger>
                           <SelectContent>
+                            <SelectItem value={UNASSIGNED_AGENT}>Não atribuído</SelectItem>
                             {agents.map((agent) => (
                               <SelectItem key={`${row.phase_key}-${role}-${agent.id}`} value={agent.id}>
                                 {agent.name} · {agent.provider}
@@ -120,7 +125,7 @@ export function AgentPhaseMatrix({ projectId }: { projectId: string }) {
                             ))}
                           </SelectContent>
                         </Select>
-                        {value && <Badge variant="secondary" className="mt-1 text-[10px]">{agentsMap.get(value)?.provider}</Badge>}
+                        {selectedAgentId && <Badge variant="secondary" className="mt-1 text-[10px]">{agentsMap.get(selectedAgentId)?.provider}</Badge>}
                       </td>
                     );
                   })}
