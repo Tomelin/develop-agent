@@ -19,6 +19,7 @@ import { Phase8Workspace } from "@/components/projects/phase8/Phase8Workspace";
 import { Phase5DevelopmentCenter } from "@/components/projects/phase5/Phase5DevelopmentCenter";
 import { SecurityAuditPanel } from "@/components/projects/phase7/SecurityAuditPanel";
 import { Phase13DeliveryCenter } from "@/components/projects/phase13/Phase13DeliveryCenter";
+import { Phase14LandingCenter } from "@/components/projects/phase14/Phase14LandingCenter";
 
 export default function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -176,6 +177,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
             <TabsTrigger value="phase5">Fase 05</TabsTrigger>
             <TabsTrigger value="phase6">Fase 06</TabsTrigger>
             <TabsTrigger value="phase8">Fase 08</TabsTrigger>
+            {project.flow_type === "B" && <TabsTrigger value="phase14">Fluxo B</TabsTrigger>}
             <TabsTrigger value="phase12">Segurança</TabsTrigger>
             <TabsTrigger value="delivery">Entrega</TabsTrigger>
             <TabsTrigger value="settings">Configurações</TabsTrigger>
@@ -315,6 +317,12 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
           <TabsContent value="phase8" className="mt-6">
             <Phase8Workspace projectId={project.id} phaseNumber={2} />
           </TabsContent>
+
+          {project.flow_type === "B" && (
+            <TabsContent value="phase14" className="mt-6">
+              <Phase14LandingCenter project={project} />
+            </TabsContent>
+          )}
 
           <TabsContent value="phase12" className="mt-6">
             <SecurityAuditPanel projectId={project.id} />

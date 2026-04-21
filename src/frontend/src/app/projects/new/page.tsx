@@ -15,6 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ProjectService } from "@/services/project";
 import { Project, FlowType } from "@/types/project";
+import { LandingPageManualBrief } from "@/types/phase14";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -24,6 +25,20 @@ const projectSchema = z.object({
   description: z.string().min(10, "Forneça uma descrição detalhada (mínimo 10 caracteres)"),
   dynamic_mode: z.boolean(),
   linked_project_id: z.string().optional(),
+  landing_mode: z.enum(["linked", "manual"]).optional(),
+  landing_product_name: z.string().optional(),
+  landing_problem_solved: z.string().optional(),
+  landing_target_audience: z.string().optional(),
+  landing_unique_value_proposed: z.string().optional(),
+  landing_output_format: z.enum(["html", "nextjs"]).optional(),
+  landing_theme: z.enum(["light", "dark"]).optional(),
+  landing_tone: z.enum(["profissional", "moderno", "descontraído", "inspirador"]).optional(),
+  landing_language: z.enum(["pt-BR", "en-US", "es"]).optional(),
+  landing_feature_1: z.string().optional(),
+  landing_feature_2: z.string().optional(),
+  landing_feature_3: z.string().optional(),
+  landing_feature_4: z.string().optional(),
+  landing_feature_5: z.string().optional(),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -47,6 +62,14 @@ export default function NewProjectPage() {
       name: "",
       description: "",
       dynamic_mode: false,
+      landing_mode: "linked",
+      landing_output_format: "html",
+      landing_theme: "dark",
+      landing_tone: "profissional",
+      landing_language: "pt-BR",
+      landing_feature_1: "",
+      landing_feature_2: "",
+      landing_feature_3: "",
     },
     mode: "onChange",
   });
@@ -54,6 +77,10 @@ export default function NewProjectPage() {
   const watchFlowType = useWatch({
     control: form.control,
     name: "flow_type",
+  });
+  const watchLandingMode = useWatch({
+    control: form.control,
+    name: "landing_mode",
   });
 
   useEffect(() => {
@@ -73,7 +100,35 @@ export default function NewProjectPage() {
     if (currentStep === 0) {
       isValid = await form.trigger("flow_type");
     } else if (currentStep === 1) {
-      isValid = await form.trigger(["name", "description", "linked_project_id"]);
+      const fields: (keyof ProjectFormValues)[] = ["name", "description", "linked_project_id"];
+      if (watchFlowType === "B" && watchLandingMode === "manual") {
+        fields.push(
+          "landing_product_name",
+          "landing_problem_solved",
+          "landing_target_audience",
+          "landing_unique_value_proposed",
+          "landing_feature_1",
+          "landing_feature_2",
+          "landing_feature_3",
+        );
+      }
+      isValid = await form.trigger(fields);
+
+      if (isValid && watchFlowType === "B" && watchLandingMode === "manual") {
+        const required = [
+          form.getValues("landing_product_name"),
+          form.getValues("landing_problem_solved"),
+          form.getValues("landing_target_audience"),
+          form.getValues("landing_unique_value_proposed"),
+          form.getValues("landing_feature_1"),
+          form.getValues("landing_feature_2"),
+          form.getValues("landing_feature_3"),
+        ];
+        if (required.some((value) => !value || !value.trim())) {
+          isValid = false;
+          toast.error("Preencha todos os campos obrigatórios do brief manual da landing page.");
+        }
+      }
     }
 
     if (isValid) {
@@ -99,6 +154,35 @@ export default function NewProjectPage() {
       });
 
       toast.success("Projeto criado com sucesso!");
+      if (data.flow_type === "B" && data.landing_mode === "manual" && typeof window !== "undefined") {
+        const featureList = [
+          data.landing_feature_1,
+          data.landing_feature_2,
+          data.landing_feature_3,
+          data.landing_feature_4,
+          data.landing_feature_5,
+        ].filter((item): item is string => Boolean(item && item.trim()));
+
+        const briefDraft: LandingPageManualBrief = {
+          product_name: data.landing_product_name?.trim() ?? "",
+          problem_solved: data.landing_problem_solved?.trim() ?? "",
+          target_audience: data.landing_target_audience?.trim() ?? "",
+          unique_value_proposed: data.landing_unique_value_proposed?.trim() ?? "",
+          key_features: featureList,
+          color_palette: ["#111827", "#2563eb", "#f59e0b"],
+          theme: data.landing_theme ?? "dark",
+          communication_tone: data.landing_tone ?? "profissional",
+          language: data.landing_language ?? "pt-BR",
+          preferred_typography: "Inter",
+          output_format: data.landing_output_format ?? "html",
+          primary_keyword: data.landing_product_name?.trim() ?? "",
+          primary_cta: "Começar agora",
+          secondary_cta: "Agendar demo",
+          social_proof_highlight: "+1.000 empresas usando",
+        };
+
+        sessionStorage.setItem(`phase14-brief-draft-new-${createdProject.id}`, JSON.stringify(briefDraft));
+      }
       router.push(`/projects/${createdProject.id}`);
     } catch (error) {
       console.error(error);
@@ -291,6 +375,78 @@ export default function NewProjectPage() {
                         </FormItem>
                       )}
                     />
+                  )}
+
+                  {watchFlowType === "B" && (
+                    <div className="space-y-6 rounded-xl border border-border bg-background/40 p-4">
+                      <div className="flex items-center justify-between rounded-lg border border-border/70 p-3">
+                        <div>
+                          <p className="text-sm font-medium">Modo de entrada do Fluxo B</p>
+                          <p className="text-xs text-muted-foreground">Escolha entre herdar contexto de um projeto existente ou criar brief manual.</p>
+                        </div>
+                        <Select
+                          value={watchLandingMode}
+                          onValueChange={(value) => {
+                            if (!value) return;
+                            form.setValue("landing_mode", value as "linked" | "manual");
+                          }}
+                        >
+                          <SelectTrigger className="w-[220px] bg-background">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="linked">Vincular projeto existente</SelectItem>
+                            <SelectItem value="manual">Criar do zero</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {watchLandingMode === "manual" && (
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <FormField control={form.control} name="landing_product_name" render={({ field }) => (
+                            <FormItem><FormLabel>Nome do Produto *</FormLabel><FormControl><Input {...field} placeholder="Ex: Acme Launch" /></FormControl><FormMessage /></FormItem>
+                          )} />
+                          <FormField control={form.control} name="landing_target_audience" render={({ field }) => (
+                            <FormItem><FormLabel>Público-alvo *</FormLabel><FormControl><Input {...field} placeholder="Ex: PMEs de serviços" /></FormControl><FormMessage /></FormItem>
+                          )} />
+                          <FormField control={form.control} name="landing_problem_solved" render={({ field }) => (
+                            <FormItem className="md:col-span-2"><FormLabel>Problema que resolve *</FormLabel><FormControl><textarea className="flex min-h-[90px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm" {...field} /></FormControl><FormMessage /></FormItem>
+                          )} />
+                          <FormField control={form.control} name="landing_unique_value_proposed" render={({ field }) => (
+                            <FormItem className="md:col-span-2"><FormLabel>Proposta de valor única *</FormLabel><FormControl><textarea className="flex min-h-[90px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm" {...field} /></FormControl><FormMessage /></FormItem>
+                          )} />
+
+                          <FormField control={form.control} name="landing_feature_1" render={({ field }) => (
+                            <FormItem><FormLabel>Benefício 1 *</FormLabel><FormControl><Input {...field} placeholder="Benefício principal 1" /></FormControl><FormMessage /></FormItem>
+                          )} />
+                          <FormField control={form.control} name="landing_feature_2" render={({ field }) => (
+                            <FormItem><FormLabel>Benefício 2 *</FormLabel><FormControl><Input {...field} placeholder="Benefício principal 2" /></FormControl><FormMessage /></FormItem>
+                          )} />
+                          <FormField control={form.control} name="landing_feature_3" render={({ field }) => (
+                            <FormItem><FormLabel>Benefício 3 *</FormLabel><FormControl><Input {...field} placeholder="Benefício principal 3" /></FormControl><FormMessage /></FormItem>
+                          )} />
+                          <FormField control={form.control} name="landing_feature_4" render={({ field }) => (
+                            <FormItem><FormLabel>Benefício 4</FormLabel><FormControl><Input {...field} placeholder="Benefício principal 4" /></FormControl><FormMessage /></FormItem>
+                          )} />
+                          <FormField control={form.control} name="landing_feature_5" render={({ field }) => (
+                            <FormItem><FormLabel>Benefício 5</FormLabel><FormControl><Input {...field} placeholder="Benefício principal 5" /></FormControl><FormMessage /></FormItem>
+                          )} />
+
+                          <FormField control={form.control} name="landing_theme" render={({ field }) => (
+                            <FormItem><FormLabel>Tema</FormLabel><Select value={field.value} onValueChange={field.onChange}><FormControl><SelectTrigger className="bg-background"><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="dark">Escuro</SelectItem><SelectItem value="light">Claro</SelectItem></SelectContent></Select></FormItem>
+                          )} />
+                          <FormField control={form.control} name="landing_tone" render={({ field }) => (
+                            <FormItem><FormLabel>Tom de comunicação</FormLabel><Select value={field.value} onValueChange={field.onChange}><FormControl><SelectTrigger className="bg-background"><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="profissional">Profissional</SelectItem><SelectItem value="moderno">Moderno</SelectItem><SelectItem value="descontraído">Descontraído</SelectItem><SelectItem value="inspirador">Inspirador</SelectItem></SelectContent></Select></FormItem>
+                          )} />
+                          <FormField control={form.control} name="landing_language" render={({ field }) => (
+                            <FormItem><FormLabel>Idioma</FormLabel><Select value={field.value} onValueChange={field.onChange}><FormControl><SelectTrigger className="bg-background"><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="pt-BR">PT-BR</SelectItem><SelectItem value="en-US">EN-US</SelectItem><SelectItem value="es">ES</SelectItem></SelectContent></Select></FormItem>
+                          )} />
+                          <FormField control={form.control} name="landing_output_format" render={({ field }) => (
+                            <FormItem><FormLabel>Stack de Output</FormLabel><Select value={field.value} onValueChange={field.onChange}><FormControl><SelectTrigger className="bg-background"><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="html">HTML/CSS/JS</SelectItem><SelectItem value="nextjs">Next.js</SelectItem></SelectContent></Select></FormItem>
+                          )} />
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
 
