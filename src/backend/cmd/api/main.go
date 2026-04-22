@@ -159,7 +159,11 @@ func main() {
 	phase15Service := usecaseproject.NewPhase15Service(projectRepo, codeFileRepo)
 	phase15Handler := handler.NewPhase15Handler(projectRepo, phase15Service)
 	promptHandler := handler.NewPromptHandler(promptRepo, usecaseprompt.NewService(promptRepo))
-	interviewProvider := &agentsdk.MetricsProvider{Base: mock.New()}
+	interviewBaseProvider, err := buildInterviewProvider(context.Background(), cfg, agentRepo)
+	if err != nil {
+		logger.Global().Fatal("Failed to initialize interview provider", zap.Error(err))
+	}
+	interviewProvider := &agentsdk.MetricsProvider{Base: interviewBaseProvider}
 	interviewService := usecaseinterview.NewService(interviewRepo, projectRepo, interviewProvider, nil)
 	interviewHandler := handler.NewInterviewHandler(interviewService)
 	billingService, err := usecasebilling.NewService(billingRepo, cfg.Billing.PricingFile)
@@ -356,5 +360,38 @@ func buildProviderForAgent(ctx context.Context, ag agent.Agent) (agentsdk.Provid
 		Token: os.Getenv(strings.TrimSpace(ag.ApiKeyRef)),
 		Model: ag.Model,
 	})
+	return provider, nil
+}
+
+func buildInterviewProvider(ctx context.Context, cfg *config.Config, agentRepo agent.Repository) (agentsdk.Provider, error) {
+	interviewerAgent, err := agentRepo.FindByName(ctx, "Entrevistador")
+	if err == nil && interviewerAgent != nil {
+		return buildProviderForAgent(ctx, *interviewerAgent)
+	}
+
+	var provider agentsdk.Provider
+	switch strings.ToUpper(strings.TrimSpace(cfg.LLM.Provider)) {
+	case "", "OPENAI":
+		provider = openai.New()
+	case "ANTHROPIC":
+		provider = anthropic.New()
+	case "GOOGLE", "GEMINI":
+		provider = gemini.New()
+	case "OLLAMA":
+		provider = ollama.New()
+	default:
+		return nil, fmt.Errorf("unsupported interview provider: %s", cfg.LLM.Provider)
+	}
+
+	model := strings.TrimSpace(os.Getenv("APP_LLM_MODEL"))
+	if model == "" {
+		model = "gpt-4o-mini"
+	}
+	if err := provider.Initialize(ctx, agentsdk.Config{
+		Token: cfg.LLM.APIKey,
+		Model: model,
+	}); err != nil {
+		return nil, err
+	}
 	return provider, nil
 }
