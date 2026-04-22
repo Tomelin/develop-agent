@@ -93,7 +93,7 @@ export default function RoadmapPage({ params }: { params: Promise<{ id: string }
 
             <div className="flex items-center gap-3">
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+                <DropdownMenuTrigger>
                     <Button variant="outline" className="gap-2 border-border/50 hover:bg-card">
                         <Download className="h-4 w-4 text-primary" />
                         Exportar Roadmap
