@@ -13,7 +13,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/dashboard/NotificationBell";
 
 export default function DashboardLayout({
@@ -123,14 +124,12 @@ export default function DashboardLayout({
             <div className="flex items-center gap-2">
               <NotificationBell />
               <DropdownMenu>
-                <DropdownMenuTrigger>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                <DropdownMenuTrigger className={cn(buttonVariants({ variant: "ghost" }), "relative h-8 w-8 rounded-full")}>
                     <Avatar className="h-8 w-8">
                       <AvatarFallback className="bg-primary/20 text-primary">
                         {user?.name?.charAt(0).toUpperCase() || "U"}
                       </AvatarFallback>
                     </Avatar>
-                  </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end">
                   <DropdownMenuLabel className="font-normal">

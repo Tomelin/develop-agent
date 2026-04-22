@@ -16,7 +16,8 @@ import { EpicsView } from "@/components/projects/roadmap/EpicsView";
 import { GanttTimelineView } from "@/components/projects/roadmap/GanttTimelineView";
 import { RoadmapSummaryCards } from "@/components/projects/roadmap/RoadmapSummaryCards";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export default function RoadmapPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -93,11 +94,9 @@ export default function RoadmapPage({ params }: { params: Promise<{ id: string }
 
             <div className="flex items-center gap-3">
               <DropdownMenu>
-                <DropdownMenuTrigger>
-                    <Button variant="outline" className="gap-2 border-border/50 hover:bg-card">
+                <DropdownMenuTrigger className={cn(buttonVariants({ variant: "outline" }), "gap-2 border-border/50 hover:bg-card")}>
                         <Download className="h-4 w-4 text-primary" />
                         Exportar Roadmap
-                    </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48 bg-card border-border">
                   <DropdownMenuItem onClick={() => handleExport("json")} className="cursor-pointer hover:bg-muted">JSON</DropdownMenuItem>
