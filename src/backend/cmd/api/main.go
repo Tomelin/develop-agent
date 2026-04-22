@@ -2,13 +2,16 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.uber.org/zap"
 
 	"github.com/develop-agent/backend/api/handler"
@@ -33,8 +36,13 @@ import (
 	usecaseorganization "github.com/develop-agent/backend/internal/usecase/organization"
 	usecaseproject "github.com/develop-agent/backend/internal/usecase/project"
 	usecaseprompt "github.com/develop-agent/backend/internal/usecase/prompt"
+	usecasetriad "github.com/develop-agent/backend/internal/usecase/triad"
 	"github.com/develop-agent/backend/pkg/agentsdk"
+	"github.com/develop-agent/backend/pkg/agentsdk/anthropic"
+	"github.com/develop-agent/backend/pkg/agentsdk/gemini"
 	"github.com/develop-agent/backend/pkg/agentsdk/mock"
+	"github.com/develop-agent/backend/pkg/agentsdk/ollama"
+	"github.com/develop-agent/backend/pkg/agentsdk/openai"
 	pkgauth "github.com/develop-agent/backend/pkg/auth"
 	"github.com/develop-agent/backend/pkg/logger"
 	"github.com/develop-agent/backend/pkg/observability"
@@ -128,6 +136,10 @@ func main() {
 
 	authService := usecaseauth.NewService(userRepo, tokenManager, pkgauth.NewRedisRefreshStore(redisClient))
 	projectService := usecaseproject.NewService(projectRepo, taskRepo)
+	agentSelector := agent.NewSelectorService(agentRepo, nil, true, nil)
+	if rmqClient != nil {
+		projectService = projectService.WithPublisher(rabbitmq.NewPublisher(rmqClient))
+	}
 	developmentService := usecaseproject.NewDevelopmentService(projectRepo, taskRepo, codeFileRepo)
 	authHandler := handler.NewAuthHandler(authService)
 	userHandler := handler.NewUserHandler(userRepo)
@@ -158,7 +170,7 @@ func main() {
 	phase19Service := usecaseproject.NewPhase19Service(projectRepo, codeFileRepo)
 	phase19Handler := handler.NewPhase19Handler(projectRepo, phase19Service)
 	adminQualityHandler := handler.NewAdminQualityHandler(usecaseproject.NewAdminQualityReportService(projectRepo, codeFileRepo))
-	integrationCompatHandler := handler.NewIntegrationCompatHandler()
+	integrationCompatHandler := handler.NewIntegrationCompatHandler(projectRepo, agentSelector)
 
 	srv := server.New(cfg)
 	v1 := srv.Router().Group("/api/v1")
@@ -197,6 +209,10 @@ func main() {
 	statusHandler.Register(v1)
 	srv.Router().GET("/metrics", observability.Handler())
 
+	if rmqClient != nil {
+		bootstrapPhaseWorkers(context.Background(), rmqClient, agentSelector, projectService, codeFileRepo)
+	}
+
 	go func() {
 		if err := srv.Start(); err != nil && err != http.ErrServerClosed {
 			logger.Global().Fatal("Failed to start server", zap.Error(err))
@@ -225,3 +241,120 @@ var _ prompt.UserPromptRepository = (*mongodb.UserPromptRepository)(nil)
 var _ interview.Repository = (*mongodb.InterviewRepository)(nil)
 var _ billing.Repository = (*mongodb.BillingRepository)(nil)
 var _ organization.Repository = (*mongodb.OrganizationRepository)(nil)
+
+func bootstrapPhaseWorkers(ctx context.Context, rmqClient *rabbitmq.Adapter, selector *agent.Service, projectService *usecaseproject.Service, codeFiles project.CodeFileRepository) {
+	for phase := 1; phase <= 9; phase++ {
+		skill, err := skillForPhase(phase)
+		if err != nil {
+			logger.Global().Error("Failed to map phase skill", zap.Int("phase", phase), zap.Error(err))
+			continue
+		}
+		triadSelection, err := selector.SelectTriad(ctx, skill)
+		if err != nil {
+			logger.Global().Error("Failed to select triad for phase worker", zap.Int("phase", phase), zap.Error(err))
+			continue
+		}
+		producer, err := buildProviderForAgent(ctx, triadSelection.Producer)
+		if err != nil {
+			logger.Global().Error("Failed to build producer provider", zap.Int("phase", phase), zap.Error(err))
+			continue
+		}
+		reviewer, err := buildProviderForAgent(ctx, triadSelection.Reviewer)
+		if err != nil {
+			logger.Global().Error("Failed to build reviewer provider", zap.Int("phase", phase), zap.Error(err))
+			continue
+		}
+		refiner, err := buildProviderForAgent(ctx, triadSelection.Refiner)
+		if err != nil {
+			logger.Global().Error("Failed to build refiner provider", zap.Int("phase", phase), zap.Error(err))
+			continue
+		}
+
+		worker := &usecasetriad.Worker{
+			QueueName: fmt.Sprintf("phase.%d", phase),
+			Consumer:  rabbitmq.NewConsumer(rmqClient),
+			Orchestrator: &usecasetriad.Orchestrator{
+				Producer: producer,
+				Reviewer: reviewer,
+				Refiner:  refiner,
+				Events:   usecasetriad.NewBroker(),
+			},
+			OnSuccess: func(ctx context.Context, job usecasetriad.Job, refined string) error {
+				pid, err := bson.ObjectIDFromHex(job.ProjectID)
+				if err != nil {
+					return err
+				}
+				if err := codeFiles.Upsert(ctx, &project.CodeFile{
+					ProjectID:   pid,
+					Path:        fmt.Sprintf("artifacts/phase_%d/output.md", job.PhaseNumber),
+					Content:     refined,
+					TaskID:      fmt.Sprintf("PHASE-%d-TRIAD", job.PhaseNumber),
+					Language:    "markdown",
+					Version:     time.Now().UTC(),
+					PhaseNumber: job.PhaseNumber,
+					CreatedAt:   time.Now().UTC(),
+					UpdatedAt:   time.Now().UTC(),
+				}); err != nil {
+					return err
+				}
+				track := project.Track(strings.ToUpper(strings.TrimSpace(job.Track)))
+				if track == "" {
+					track = project.TrackFull
+				}
+				_, err = projectService.ApprovePhaseTrack(ctx, job.ProjectID, job.OwnerUserID, job.PhaseNumber, track)
+				return err
+			},
+		}
+		go func(w *usecasetriad.Worker, phaseNumber int) {
+			if err := w.Start(); err != nil {
+				logger.Global().Error("Failed to start phase worker", zap.Int("phase", phaseNumber), zap.Error(err))
+			}
+		}(worker, phase)
+	}
+}
+
+func skillForPhase(phase int) (agent.Skill, error) {
+	switch phase {
+	case 1:
+		return agent.SkillProjectCreation, nil
+	case 2:
+		return agent.SkillEngineering, nil
+	case 3:
+		return agent.SkillArchitecture, nil
+	case 4:
+		return agent.SkillPlanning, nil
+	case 5:
+		return agent.SkillDevelopmentBackend, nil
+	case 6:
+		return agent.SkillTesting, nil
+	case 7:
+		return agent.SkillSecurity, nil
+	case 8:
+		return agent.SkillDocumentation, nil
+	case 9:
+		return agent.SkillDevOps, nil
+	default:
+		return "", fmt.Errorf("phase %d not supported", phase)
+	}
+}
+
+func buildProviderForAgent(ctx context.Context, ag agent.Agent) (agentsdk.Provider, error) {
+	var provider agentsdk.Provider
+	switch ag.Provider {
+	case agent.ProviderOpenAI:
+		provider = openai.New()
+	case agent.ProviderAnthropic:
+		provider = anthropic.New()
+	case agent.ProviderGoogle:
+		provider = gemini.New()
+	case agent.ProviderOllama:
+		provider = ollama.New()
+	default:
+		return nil, fmt.Errorf("unsupported provider: %s", ag.Provider)
+	}
+	_ = provider.Initialize(ctx, agentsdk.Config{
+		Token: os.Getenv(strings.TrimSpace(ag.ApiKeyRef)),
+		Model: ag.Model,
+	})
+	return provider, nil
+}
