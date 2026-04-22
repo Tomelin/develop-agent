@@ -1,16 +1,28 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
+	"github.com/develop-agent/backend/internal/domain/agent"
+	"github.com/develop-agent/backend/internal/domain/project"
 	"github.com/gin-gonic/gin"
 )
 
 // IntegrationCompatHandler expõe endpoints ainda não implementados em profundidade,
 // mas necessários para manter o contrato de integração com o frontend.
-type IntegrationCompatHandler struct{}
+type IntegrationCompatHandler struct {
+	projects project.ProjectRepository
+	selector *agent.Service
+}
 
-func NewIntegrationCompatHandler() *IntegrationCompatHandler { return &IntegrationCompatHandler{} }
+func NewIntegrationCompatHandler(projects project.ProjectRepository, selector *agent.Service) *IntegrationCompatHandler {
+	return &IntegrationCompatHandler{projects: projects, selector: selector}
+}
+
+type dynamicModeRequest struct {
+	Enabled bool `json:"enabled"`
+}
 
 func (h *IntegrationCompatHandler) Register(rg *gin.RouterGroup) {
 	projects := rg.Group("/projects")
@@ -29,15 +41,8 @@ func (h *IntegrationCompatHandler) Register(rg *gin.RouterGroup) {
 		// Phase 17
 		projects.GET("/:id/triad-selections", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"items": []any{}}) })
 		projects.GET("/:id/selection-logs", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"items": []any{}}) })
-		projects.PUT("/:id/dynamic-mode", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"enabled": true}) })
-		projects.GET("/:id/dynamic-mode/preview", func(c *gin.Context) {
-			emptyTriad := gin.H{
-				"producer": gin.H{"id": "", "name": "", "provider": "OPENAI", "model": ""},
-				"reviewer": gin.H{"id": "", "name": "", "provider": "OPENAI", "model": ""},
-				"refiner":  gin.H{"id": "", "name": "", "provider": "OPENAI", "model": ""},
-			}
-			c.JSON(http.StatusOK, gin.H{"eligible_agents": 0, "triad": emptyTriad, "notes": []string{}})
-		})
+		projects.PUT("/:id/dynamic-mode", h.UpdateDynamicMode)
+		projects.GET("/:id/dynamic-mode/preview", h.PreviewDynamicMode)
 		projects.GET("/:id/diversity-metrics", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{
 				"project_id":               c.Param("id"),
@@ -106,4 +111,88 @@ func (h *IntegrationCompatHandler) Register(rg *gin.RouterGroup) {
 
 	// Compat com frontend legado
 	rg.POST("/agents/test-config", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"ok": true}) })
+}
+
+func (h *IntegrationCompatHandler) UpdateDynamicMode(c *gin.Context) {
+	if h.projects == nil {
+		c.JSON(http.StatusNotImplemented, gin.H{"error": "project repository not configured"})
+		return
+	}
+	var req dynamicModeRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		return
+	}
+	p, err := h.projects.FindByID(c.Request.Context(), c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
+		return
+	}
+	p.DynamicModeEnabled = req.Enabled
+	if err := h.projects.Update(c.Request.Context(), p); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update dynamic mode"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"enabled": p.DynamicModeEnabled})
+}
+
+func (h *IntegrationCompatHandler) PreviewDynamicMode(c *gin.Context) {
+	if h.projects == nil || h.selector == nil {
+		c.JSON(http.StatusNotImplemented, gin.H{"error": "dynamic mode preview not configured"})
+		return
+	}
+	p, err := h.projects.FindByID(c.Request.Context(), c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "project not found"})
+		return
+	}
+	skill, mapErr := mapPhaseSkill(p.CurrentPhaseNumber)
+	if mapErr != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": mapErr.Error()})
+		return
+	}
+
+	selection, err := h.selector.SelectTriadDetailed(c.Request.Context(), skill, "preview")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"eligible_agents": len(selection.CandidateAgents),
+		"triad": gin.H{
+			"producer": selection.Producer,
+			"reviewer": selection.Reviewer,
+			"refiner":  selection.Refiner,
+		},
+		"selection_reason": selection.SelectionReason,
+		"warnings":         selection.Warnings,
+		"dynamic_mode":     p.DynamicModeEnabled,
+		"phase":            p.CurrentPhaseNumber,
+		"skill":            skill,
+	})
+}
+
+func mapPhaseSkill(phase int) (agent.Skill, error) {
+	switch phase {
+	case 1:
+		return agent.SkillProjectCreation, nil
+	case 2:
+		return agent.SkillEngineering, nil
+	case 3:
+		return agent.SkillArchitecture, nil
+	case 4:
+		return agent.SkillPlanning, nil
+	case 5:
+		return agent.SkillDevelopmentBackend, nil
+	case 6:
+		return agent.SkillTesting, nil
+	case 7:
+		return agent.SkillSecurity, nil
+	case 8:
+		return agent.SkillDocumentation, nil
+	case 9:
+		return agent.SkillDevOps, nil
+	default:
+		return "", fmt.Errorf("unsupported phase %d", phase)
+	}
 }

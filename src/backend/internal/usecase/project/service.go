@@ -85,6 +85,13 @@ func (s *Service) CreateProject(ctx context.Context, in CreateProjectInput) (*do
 	if err := s.repo.Create(ctx, p); err != nil {
 		return nil, err
 	}
+	if s.publisher != nil {
+		if err := s.stateMachine.TransitionProjectStatus(p, domain.ProjectInProgress, "phase 1 started automatically", in.OwnerUserID); err == nil {
+			if err := s.repo.Update(ctx, p); err == nil {
+				_, _ = s.StartPhase(ctx, p.ID.Hex(), in.OwnerUserID, 1)
+			}
+		}
+	}
 	return p, nil
 }
 
@@ -148,7 +155,7 @@ func (s *Service) StartPhase(ctx context.Context, projectID, ownerID string, pha
 				return nil, err
 			}
 			if s.publisher != nil {
-				_ = s.publisher.Publish(ctx, fmt.Sprintf("phase.%d.%s", phaseNumber, strings.ToLower(string(track))), []byte(fmt.Sprintf(`{"project_id":"%s","phase_number":%d,"track":"%s"}`, projectID, phaseNumber, track)))
+				_ = s.publisher.Publish(ctx, fmt.Sprintf("phase.%d.%s", phaseNumber, strings.ToLower(string(track))), []byte(fmt.Sprintf(`{"project_id":"%s","owner_user_id":"%s","phase_number":%d,"track":"%s"}`, projectID, ownerID, phaseNumber, track)))
 			}
 		}
 	} else {
@@ -156,7 +163,7 @@ func (s *Service) StartPhase(ctx context.Context, projectID, ownerID string, pha
 			return nil, err
 		}
 		if s.publisher != nil {
-			_ = s.publisher.Publish(ctx, fmt.Sprintf("phase.%d.full", phaseNumber), []byte(fmt.Sprintf(`{"project_id":"%s","phase_number":%d,"track":"FULL"}`, projectID, phaseNumber)))
+			_ = s.publisher.Publish(ctx, fmt.Sprintf("phase.%d.full", phaseNumber), []byte(fmt.Sprintf(`{"project_id":"%s","owner_user_id":"%s","phase_number":%d,"track":"FULL"}`, projectID, ownerID, phaseNumber)))
 		}
 	}
 
