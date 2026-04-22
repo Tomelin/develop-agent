@@ -9,16 +9,42 @@ import {
   TriadTrackRuntime,
 } from "@/types/phase8";
 
+
+const toArray = <T>(payload: unknown): T[] => {
+  if (Array.isArray(payload)) {
+    return payload as T[];
+  }
+
+  if (payload && typeof payload === "object") {
+    const record = payload as Record<string, unknown>;
+
+    if (Array.isArray(record.items)) {
+      return record.items as T[];
+    }
+
+    if (Array.isArray(record.rows)) {
+      return record.rows as T[];
+    }
+
+    const objectValues = Object.values(record).filter((value) => value && typeof value === "object");
+    if (objectValues.length) {
+      return objectValues as T[];
+    }
+  }
+
+  return [];
+};
+
 export const Phase8Service = {
   getTrackStatus: async (projectId: string, phaseNumber: number): Promise<PhaseTrackStatus[]> => {
     const response = await api.get(`/projects/${projectId}/phases/${phaseNumber}/tracks`);
-    return response.data?.items ?? response.data ?? [];
+    return toArray<PhaseTrackStatus>(response.data);
   },
 
   getArtifacts: async (projectId: string, phaseNumber: number): Promise<PhaseArtifact[]> => {
     try {
       const response = await api.get(`/projects/${projectId}/phases/${phaseNumber}/artifacts`);
-      return response.data?.items ?? response.data ?? [];
+      return toArray<PhaseArtifact>(response.data);
     } catch (error) {
       if (isAxiosError(error) && error.response?.status === 404) {
         return [];
@@ -30,7 +56,7 @@ export const Phase8Service = {
   getTriadProgress: async (projectId: string, phaseNumber: number): Promise<TriadTrackRuntime[]> => {
     try {
       const response = await api.get(`/projects/${projectId}/phases/${phaseNumber}/triad-progress`);
-      return response.data?.items ?? response.data ?? [];
+      return toArray<TriadTrackRuntime>(response.data);
     } catch (error) {
       if (isAxiosError(error) && error.response?.status === 404) {
         return [];
@@ -42,7 +68,7 @@ export const Phase8Service = {
   getFeedbackHistory: async (projectId: string, phaseNumber: number, track: PhaseTrack): Promise<TrackFeedbackItem[]> => {
     try {
       const response = await api.get(`/projects/${projectId}/phases/${phaseNumber}/tracks/${track}/feedbacks`);
-      return response.data?.items ?? response.data ?? [];
+      return toArray<TrackFeedbackItem>(response.data);
     } catch (error) {
       if (isAxiosError(error) && error.response?.status === 404) {
         return [];
@@ -69,7 +95,7 @@ export const Phase8Service = {
   getNotifications: async (): Promise<NotificationItem[]> => {
     try {
       const response = await api.get("/notifications");
-      return response.data?.items ?? response.data ?? [];
+      return toArray<NotificationItem>(response.data);
     } catch (error) {
       if (isAxiosError(error) && error.response?.status === 404) {
         return [];
