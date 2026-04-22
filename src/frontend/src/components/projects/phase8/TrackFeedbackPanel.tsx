@@ -24,7 +24,8 @@ export function TrackFeedbackPanel({ trackStatuses, artifacts, feedbackHistory, 
   const [loadingTrack, setLoadingTrack] = useState<PhaseTrack | null>(null);
 
   const statusByTrack = useMemo(() => {
-    return trackStatuses.reduce((acc, item) => ({ ...acc, [item.track]: item }), {} as Record<PhaseTrack, PhaseTrackStatus>);
+    const statuses = Array.isArray(trackStatuses) ? trackStatuses : [];
+    return statuses.reduce((acc, item) => ({ ...acc, [item.track]: item }), {} as Record<PhaseTrack, PhaseTrackStatus>);
   }, [trackStatuses]);
 
   const handleSend = async (track: PhaseTrack) => {
