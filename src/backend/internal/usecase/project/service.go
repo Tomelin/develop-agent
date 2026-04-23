@@ -155,7 +155,9 @@ func (s *Service) StartPhase(ctx context.Context, projectID, ownerID string, pha
 				return nil, err
 			}
 			if s.publisher != nil {
-				_ = s.publisher.Publish(ctx, fmt.Sprintf("phase.%d.%s", phaseNumber, strings.ToLower(string(track))), []byte(fmt.Sprintf(`{"project_id":"%s","owner_user_id":"%s","phase_number":%d,"track":"%s"}`, projectID, ownerID, phaseNumber, track)))
+				if err := s.publisher.Publish(ctx, fmt.Sprintf("phase.%d.%s", phaseNumber, strings.ToLower(string(track))), []byte(fmt.Sprintf(`{"project_id":"%s","owner_user_id":"%s","phase_number":%d,"track":"%s"}`, projectID, ownerID, phaseNumber, track))); err != nil {
+					return nil, err
+				}
 			}
 		}
 	} else {
@@ -163,7 +165,9 @@ func (s *Service) StartPhase(ctx context.Context, projectID, ownerID string, pha
 			return nil, err
 		}
 		if s.publisher != nil {
-			_ = s.publisher.Publish(ctx, fmt.Sprintf("phase.%d.full", phaseNumber), []byte(fmt.Sprintf(`{"project_id":"%s","owner_user_id":"%s","phase_number":%d,"track":"FULL"}`, projectID, ownerID, phaseNumber)))
+			if err := s.publisher.Publish(ctx, fmt.Sprintf("phase.%d.full", phaseNumber), []byte(fmt.Sprintf(`{"project_id":"%s","owner_user_id":"%s","phase_number":%d,"track":"FULL"}`, projectID, ownerID, phaseNumber))); err != nil {
+				return nil, err
+			}
 		}
 	}
 
