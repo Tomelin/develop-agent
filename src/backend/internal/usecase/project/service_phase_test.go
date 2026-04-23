@@ -109,3 +109,28 @@ func TestPhase3RequiresPhase2CompletedInBothTracks(t *testing.T) {
 		t.Fatal("expected phase 2 completion precondition")
 	}
 }
+
+func TestCreateProjectAutoStartsPhase1(t *testing.T) {
+	owner := bson.NewObjectID()
+	org := bson.NewObjectID()
+	repo := &memProjectRepo{}
+	svc := NewService(repo, &noopTaskRepo{})
+
+	created, err := svc.CreateProject(context.Background(), CreateProjectInput{
+		Name:           "Projeto auto start",
+		FlowType:       domainproject.FlowSoftware,
+		OwnerUserID:    owner.Hex(),
+		OrganizationID: org.Hex(),
+	})
+	if err != nil {
+		t.Fatalf("create project: %v", err)
+	}
+
+	phase1 := created.Phases[0]
+	if phase1.Status != domainproject.PhaseInProgress {
+		t.Fatalf("expected phase 1 in progress, got %s", phase1.Status)
+	}
+	if created.Status != domainproject.ProjectInProgress {
+		t.Fatalf("expected project status in progress, got %s", created.Status)
+	}
+}

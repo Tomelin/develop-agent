@@ -325,7 +325,17 @@ func selectTriadWithFallback(ctx context.Context, selector *agent.Service, skill
 	fallbackSkill := agent.SkillProjectCreation
 	fallbackTriad, fallbackErr := selector.SelectTriad(ctx, fallbackSkill)
 	if fallbackErr != nil {
-		return agent.Triad{}, fmt.Errorf("select triad for %s: %w (fallback %s failed: %v)", skill, err, fallbackSkill, fallbackErr)
+		anyTriad, anyErr := selector.SelectAnyTriad(ctx)
+		if anyErr != nil {
+			return agent.Triad{}, fmt.Errorf("select triad for %s: %w (fallback %s failed: %v, any triad failed: %v)", skill, err, fallbackSkill, fallbackErr, anyErr)
+		}
+		logger.Global().Warn(
+			"Using generic fallback triad due to missing skill-specific agents",
+			zap.String("skill", string(skill)),
+			zap.String("fallback_skill", string(fallbackSkill)),
+			zap.Error(err),
+		)
+		return anyTriad, nil
 	}
 
 	logger.Global().Warn(
