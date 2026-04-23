@@ -40,7 +40,6 @@ import (
 	"github.com/develop-agent/backend/pkg/agentsdk"
 	"github.com/develop-agent/backend/pkg/agentsdk/anthropic"
 	"github.com/develop-agent/backend/pkg/agentsdk/gemini"
-	"github.com/develop-agent/backend/pkg/agentsdk/mock"
 	"github.com/develop-agent/backend/pkg/agentsdk/ollama"
 	"github.com/develop-agent/backend/pkg/agentsdk/openai"
 	pkgauth "github.com/develop-agent/backend/pkg/auth"

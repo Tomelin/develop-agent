@@ -2,17 +2,21 @@ package openai
 
 import (
 	"context"
-	"fmt"
+	"errors"
+	"io"
 	"sync"
+
+	openai "github.com/sashabaranov/go-openai"
 
 	"github.com/develop-agent/backend/pkg/agentsdk"
 )
 
 type Provider struct {
-	mu    sync.RWMutex
-	cfg   agentsdk.Config
-	name  string
-	model string
+	mu     sync.RWMutex
+	cfg    agentsdk.Config
+	name   string
+	model  string
+	client *openai.Client
 }
 
 func New() *Provider {
@@ -24,40 +28,88 @@ func (p *Provider) Initialize(_ context.Context, cfg agentsdk.Config) error {
 	defer p.mu.Unlock()
 	p.cfg = cfg
 	p.model = cfg.Model
+	p.client = openai.NewClient(cfg.Token)
 	return nil
 }
 
-func (p *Provider) Complete(_ context.Context, req agentsdk.CompletionRequest) (agentsdk.CompletionResponse, error) {
+func (p *Provider) Complete(ctx context.Context, req agentsdk.CompletionRequest) (agentsdk.CompletionResponse, error) {
 	p.mu.RLock()
 	model := p.model
-	name := p.name
+	client := p.client
 	p.mu.RUnlock()
 
 	if len(req.Messages) == 0 {
-		return agentsdk.CompletionResponse{}, fmt.Errorf("%s: at least one message is required", name)
+		return agentsdk.CompletionResponse{}, errors.New("openai: at least one message is required")
 	}
-	last := req.Messages[len(req.Messages)-1].Content
-	usage := agentsdk.Usage{InputTokens: len(req.Messages) * 12, OutputTokens: 20}
-	usage.TotalTokens = usage.InputTokens + usage.OutputTokens
+
+	openaiReq := openai.ChatCompletionRequest{
+		Model:    model,
+		Messages: mapMessages(req.Messages),
+	}
+
+	resp, err := client.CreateChatCompletion(ctx, openaiReq)
+	if err != nil {
+		return agentsdk.CompletionResponse{}, err
+	}
+
+	if len(resp.Choices) == 0 {
+		return agentsdk.CompletionResponse{}, errors.New("openai: empty choices returned")
+	}
 
 	return agentsdk.CompletionResponse{
-		Message: agentsdk.Message{Role: agentsdk.RoleAssistant, Content: fmt.Sprintf("[%s/%s] %s", name, model, last)},
-		Usage:   usage,
+		Message: agentsdk.Message{
+			Role:    agentsdk.RoleAssistant,
+			Content: resp.Choices[0].Message.Content,
+		},
+		Usage: agentsdk.Usage{
+			InputTokens:  resp.Usage.PromptTokens,
+			OutputTokens: resp.Usage.CompletionTokens,
+			TotalTokens:  resp.Usage.TotalTokens,
+		},
 	}, nil
 }
 
 func (p *Provider) Stream(ctx context.Context, req agentsdk.CompletionRequest) (<-chan agentsdk.StreamEvent, error) {
-	ch := make(chan agentsdk.StreamEvent, 2)
+	p.mu.RLock()
+	model := p.model
+	client := p.client
+	p.mu.RUnlock()
+
+	openaiReq := openai.ChatCompletionRequest{
+		Model:    model,
+		Messages: mapMessages(req.Messages),
+		Stream:   true,
+	}
+
+	stream, err := client.CreateChatCompletionStream(ctx, openaiReq)
+	if err != nil {
+		return nil, err
+	}
+
+	ch := make(chan agentsdk.StreamEvent)
 	go func() {
 		defer close(ch)
-		resp, err := p.Complete(ctx, req)
-		if err != nil {
-			ch <- agentsdk.StreamEvent{Err: err, Done: true}
-			return
+		defer stream.Close()
+
+		for {
+			resp, err := stream.Recv()
+			if err != nil {
+				if errors.Is(err, io.EOF) {
+					ch <- agentsdk.StreamEvent{Done: true, StopReason: "stop"}
+				} else {
+					ch <- agentsdk.StreamEvent{Err: err, Done: true}
+				}
+				return
+			}
+			if len(resp.Choices) > 0 {
+				delta := resp.Choices[0].Delta.Content
+				if delta != "" {
+					ch <- agentsdk.StreamEvent{Delta: delta}
+				}
+			}
 		}
-		ch <- agentsdk.StreamEvent{Delta: resp.Message.Content}
-		ch <- agentsdk.StreamEvent{Done: true, StopReason: "end_turn"}
 	}()
+
 	return ch, nil
 }
 
@@ -72,3 +124,21 @@ func (p *Provider) ModelName() string {
 }
 
 func (p *Provider) Close() error { return nil }
+
+func mapMessages(msgs []agentsdk.Message) []openai.ChatCompletionMessage {
+	var result []openai.ChatCompletionMessage
+	for _, m := range msgs {
+		role := openai.ChatMessageRoleUser
+		switch m.Role {
+		case agentsdk.RoleSystem:
+			role = openai.ChatMessageRoleSystem
+		case agentsdk.RoleAssistant:
+			role = openai.ChatMessageRoleAssistant
+		}
+		result = append(result, openai.ChatCompletionMessage{
+			Role:    role,
+			Content: m.Content,
+		})
+	}
+	return result
+}
