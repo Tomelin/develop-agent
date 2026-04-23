@@ -252,7 +252,7 @@ func bootstrapPhaseWorkers(ctx context.Context, rmqClient *rabbitmq.Adapter, sel
 			logger.Global().Error("Failed to map phase skill", zap.Int("phase", phase), zap.Error(err))
 			continue
 		}
-		triadSelection, err := selector.SelectTriad(ctx, skill)
+		triadSelection, err := selectTriadWithFallback(ctx, selector, skill)
 		if err != nil {
 			logger.Global().Error("Failed to select triad for phase worker", zap.Int("phase", phase), zap.Error(err))
 			continue
@@ -314,6 +314,28 @@ func bootstrapPhaseWorkers(ctx context.Context, rmqClient *rabbitmq.Adapter, sel
 			}
 		}(worker, phase)
 	}
+}
+
+func selectTriadWithFallback(ctx context.Context, selector *agent.Service, skill agent.Skill) (agent.Triad, error) {
+	triadSelection, err := selector.SelectTriad(ctx, skill)
+	if err == nil {
+		return triadSelection, nil
+	}
+
+	fallbackSkill := agent.SkillProjectCreation
+	fallbackTriad, fallbackErr := selector.SelectTriad(ctx, fallbackSkill)
+	if fallbackErr != nil {
+		return agent.Triad{}, fmt.Errorf("select triad for %s: %w (fallback %s failed: %v)", skill, err, fallbackSkill, fallbackErr)
+	}
+
+	logger.Global().Warn(
+		"Using fallback triad for phase worker due to missing skill-specific agents",
+		zap.String("skill", string(skill)),
+		zap.String("fallback_skill", string(fallbackSkill)),
+		zap.Error(err),
+	)
+
+	return fallbackTriad, nil
 }
 
 func skillForPhase(phase int) (agent.Skill, error) {
