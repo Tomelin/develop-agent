@@ -61,6 +61,23 @@ func (s *Service) SelectTriad(ctx context.Context, skill Skill) (Triad, error) {
 	return Triad{Producer: selection.Producer, Reviewer: selection.Reviewer, Refiner: selection.Refiner}, nil
 }
 
+func (s *Service) SelectAnyTriad(ctx context.Context) (Triad, error) {
+	enabled := true
+	agents, err := s.repo.List(ctx, ListFilter{Enabled: &enabled})
+	if err != nil {
+		return Triad{}, err
+	}
+	if len(agents) == 0 {
+		return Triad{}, errors.New("no enabled agents found")
+	}
+	selection := s.pickTriadSelection(agents)
+	return Triad{
+		Producer: selection.Producer,
+		Reviewer: selection.Reviewer,
+		Refiner:  selection.Refiner,
+	}, nil
+}
+
 func (s *Service) SelectTriadDetailed(ctx context.Context, skill Skill, phaseName string) (TriadSelection, error) {
 	if !skill.IsValid() {
 		return TriadSelection{}, errors.New("invalid skill")

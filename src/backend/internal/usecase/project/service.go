@@ -85,14 +85,10 @@ func (s *Service) CreateProject(ctx context.Context, in CreateProjectInput) (*do
 	if err := s.repo.Create(ctx, p); err != nil {
 		return nil, err
 	}
-	if s.publisher != nil {
-		if err := s.stateMachine.TransitionProjectStatus(p, domain.ProjectInProgress, "phase 1 started automatically", in.OwnerUserID); err == nil {
-			if err := s.repo.Update(ctx, p); err == nil {
-				_, _ = s.StartPhase(ctx, p.ID.Hex(), in.OwnerUserID, 1)
-			}
-		}
+	if _, err := s.StartPhase(ctx, p.ID.Hex(), in.OwnerUserID, 1); err != nil {
+		return nil, err
 	}
-	return p, nil
+	return s.repo.FindByID(ctx, p.ID.Hex())
 }
 
 func (s *Service) Pause(ctx context.Context, projectID, ownerID string) (*domain.Project, error) {
@@ -143,6 +139,11 @@ func (s *Service) StartPhase(ctx context.Context, projectID, ownerID string, pha
 	}
 	if err := validatePhaseStartPreconditions(p, phaseNumber); err != nil {
 		return nil, err
+	}
+	if p.Status == domain.ProjectDraft || p.Status == domain.ProjectPaused {
+		if err := s.stateMachine.TransitionProjectStatus(p, domain.ProjectInProgress, "phase started", ownerID); err != nil {
+			return nil, err
+		}
 	}
 	phase, err := findPhaseByNumber(p, phaseNumber)
 	if err != nil {
